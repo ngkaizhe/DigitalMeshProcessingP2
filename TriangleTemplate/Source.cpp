@@ -2,7 +2,6 @@
 #include"Common.h"
 #include "ViewManager.h"
 #include"Shader.h"
-#include"Model.h"
 
 #define MENU_Entry1 1
 #define MENU_Entry2 2
@@ -16,10 +15,8 @@ float			aspect;
 ViewManager		m_camera;
 
 Shader shader;
-Model model;
 
-glm::mat4 translationMatrix[4];
-glm::vec3 relativePos[4];
+unsigned int VAO;
 
 
 void My_Init()
@@ -29,17 +26,28 @@ void My_Init()
 	glDepthFunc(GL_LEQUAL);
 
 	shader = Shader("../Assets/shaders/vertex.vs.glsl", "../Assets/shaders/fragment.fs.glsl");
-	model = Model("../Assets/objects/nanosuit/nanosuit.obj");
 
-	// init all translationMatrix
-	for (int i = 0; i < 4; i++)
-		translationMatrix[i] = mat4();
+	float vertices[] = {
+	-0.5f, -0.5f, 0.0f,
+	 0.5f, -0.5f, 0.0f,
+	 0.0f,  0.5f, 0.0f
+	};
 
-	relativePos[0] = vec3(0, 0, 0);
-	relativePos[1] = vec3(1, 0, 0);
-	relativePos[2] = vec3(1, 0, 0);
-	relativePos[3] = vec3(1, 0, 0);
+	unsigned int VBO;
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
 
+	glBindVertexArray(VAO);
+	// 2. copy our vertices array in a buffer for OpenGL to use
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	// 3. then set our vertex attributes pointers
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
 }
 
 // GLUT callback. Called to draw the scene.
@@ -60,8 +68,9 @@ void My_Display()
 	// do something here
 	// set model matrix
 	shader.setUniformMatrix4fv("model", mat4(1.0));
-	// draw model
-	model.Draw(shader);
+
+	glBindVertexArray(VAO);
+	glDrawArrays(GL_TRIANGLES, 0, 3);
 
 	///////////////////////////	
 
