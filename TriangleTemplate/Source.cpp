@@ -2,10 +2,7 @@
 #include"Common.h"
 #include "ViewManager.h"
 #include"Shader.h"
-
-#define MENU_Entry1 1
-#define MENU_Entry2 2
-#define MENU_EXIT   3
+#include <AntTweakBar.h>
 
 using namespace glm;
 using namespace std;
@@ -17,6 +14,37 @@ ViewManager		m_camera;
 Shader shader;
 
 unsigned int VAO;
+
+// selection part
+enum PictureSelectionMode
+{
+	Gingerman,
+	Gingerman2,
+};
+PictureSelectionMode pictureSelectionMode = Gingerman;
+
+TwEnumVal pictureSelectionModeEV[] = {
+	{Gingerman, "Ginger Man"},
+	{Gingerman2, "Ginger Man2"},
+};
+TwType pictureSelectionModeType;
+
+void SetupGUI() {
+#ifdef _MSC_VER
+	TwInit(TW_OPENGL, NULL);
+#else
+	TwInit(TW_OPENGL_CORE, NULL);
+#endif
+	TwGLUTModifiersFunc(glutGetModifiers);
+	TwBar* bar = TwNewBar("Project2");
+	TwDefine(" 'Project2' size='230 90' ");
+	TwDefine(" 'Project2' fontsize='3' color='96 216 224'");
+
+	 //Defining season enum type
+	 pictureSelectionModeType = TwDefineEnum("SelectionModeType", pictureSelectionModeEV, 2);
+	 //Adding season to bar
+	 TwAddVarRW(bar, "SelectionMode", pictureSelectionModeType, &pictureSelectionMode, NULL);
+}
 
 
 void My_Init()
@@ -71,10 +99,11 @@ void My_Display()
 
 	glBindVertexArray(VAO);
 	glDrawArrays(GL_TRIANGLES, 0, 3);
+	glUseProgram(0);
 
+	// draw gui
+	TwDraw();
 	///////////////////////////	
-
-	glFlush();
 	glutSwapBuffers();
 }
 
@@ -84,6 +113,9 @@ void My_Reshape(int width, int height)
 	aspect = width * 1.0f / height;
 	m_camera.SetWindowSize(width, height);
 	glViewport(0, 0, width, height);
+
+	// Send the new window size to AntTweakBar
+    TwWindowSize(width, height);
 }
 
 //Timer event
@@ -96,31 +128,36 @@ void My_Timer(int val)
 //Mouse event
 void My_Mouse(int button, int state, int x, int y)
 {
-	m_camera.mouseEvents(button, state, x, y);
+	if (!TwEventMouseButtonGLUT(button, state, x, y)) {
+		m_camera.mouseEvents(button, state, x, y);
 
-	if (button == GLUT_LEFT_BUTTON)
-	{
-		if (state == GLUT_DOWN)
+		if (button == GLUT_LEFT_BUTTON)
 		{
-			printf("Mouse %d is pressed at (%d, %d)\n", button, x, y);
+			if (state == GLUT_DOWN)
+			{
+				printf("Mouse %d is pressed at (%d, %d)\n", button, x, y);
+			}
+			else if (state == GLUT_UP)
+			{
+				printf("Mouse %d is released at (%d, %d)\n", button, x, y);
+			}
 		}
-		else if (state == GLUT_UP)
+		else if (button == GLUT_RIGHT_BUTTON)
 		{
-			printf("Mouse %d is released at (%d, %d)\n", button, x, y);
+			printf("Mouse %d is pressed\n", button);
 		}
+		printf("%d %d %d %d\n", button, state, x, y);
 	}
-	else if (button == GLUT_RIGHT_BUTTON)
-	{
-		printf("Mouse %d is pressed\n", button);
-	}
-	printf("%d %d %d %d\n", button, state, x, y);
 }
 
 //Keyboard event
 void My_Keyboard(unsigned char key, int x, int y)
 {
-	m_camera.keyEvents(key);
-	printf("Key %c is pressed at (%d, %d)\n", key, x, y);
+	if (!TwEventKeyboardGLUT(key, x, y))
+	{
+		m_camera.keyEvents(key);
+		printf("Key %c is pressed at (%d, %d)\n", key, x, y);
+	}
 }
 
 //Special key event
@@ -143,28 +180,11 @@ void My_SpecialKeys(int key, int x, int y)
 	}
 }
 
-//Menu event
-void My_Menu(int id)
-{
-	switch (id)
-	{
-	case MENU_Entry1:
-		printf("Entry1 is selected.\n");
-		break;
-	case MENU_Entry2:
-		printf("Entry2 is selected.\n");
-		break;
-	case MENU_EXIT:
-		exit(0);
-		break;
-	default:
-		break;
-	}
-}
-
 
 void My_Mouse_Moving(int x, int y) {
-	m_camera.mouseMoveEvent(x, y);
+	if (!TwEventMouseMotionGLUT(x, y)) {
+		m_camera.mouseMoveEvent(x, y);
+	}
 }
 
 int main(int argc, char *argv[])
@@ -183,11 +203,13 @@ int main(int argc, char *argv[])
 #endif
 
 	glutInitWindowPosition(100, 100);
-	glutInitWindowSize(600, 600);
+	glutInitWindowSize(1200, 600);
 	glutCreateWindow("Framework"); // You cannot use OpenGL functions before this line; The OpenGL context must be created first by glutCreateWindow()!
 #ifdef _MSC_VER
 	glewInit();
 #endif
+	// setup for antweakbar
+	SetupGUI();
 
 	//Print debug information 
 	ViewManager::DumpInfo();
@@ -195,23 +217,6 @@ int main(int argc, char *argv[])
 
 	//Call custom initialize function
 	My_Init();
-
-	//Define Menu
-	////////////////////
-	int menu_main = glutCreateMenu(My_Menu);
-	int menu_entry = glutCreateMenu(My_Menu);
-
-	glutSetMenu(menu_main);
-	glutAddSubMenu("Entry", menu_entry);
-	glutAddMenuEntry("Exit", MENU_EXIT);
-
-	glutSetMenu(menu_entry);
-	glutAddMenuEntry("Print Entry1", MENU_Entry1);
-	glutAddMenuEntry("Print Entry2", MENU_Entry2);
-
-	glutSetMenu(menu_main);
-	glutAttachMenu(GLUT_RIGHT_BUTTON);
-	////////////////////
 
 	//Register GLUT callback functions
 	////////////////////
