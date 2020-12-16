@@ -40,6 +40,7 @@ void SetupGUI() {
 	TwDefine(" 'Project2' size='230 90' ");
 	TwDefine(" 'Project2' fontsize='3' color='96 216 224'");
 
+
 	 //Defining season enum type
 	 pictureSelectionModeType = TwDefineEnum("SelectionModeType", pictureSelectionModeEV, 2);
 	 //Adding season to bar
