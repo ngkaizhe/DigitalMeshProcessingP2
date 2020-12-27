@@ -4,6 +4,11 @@
 #include"Shader.h"
 #include <AntTweakBar.h>
 
+#include "ARAPTool.h"
+#include "vavImage.h"
+#include "TriangulationCgal.h"
+#include "GUA_OM.h"
+
 using namespace glm;
 using namespace std;
 
@@ -14,6 +19,25 @@ ViewManager		m_camera;
 Shader shader;
 
 unsigned int VAO;
+
+vavImage* ImageEdge = NULL;	   //find contour
+TriangulationCgal* Triangulate = NULL;	   //Delaunay triangulation	
+ARAPTool* Arap = NULL;
+Tri_Mesh* test_1 = NULL;
+Triangles m_triangles;
+std::vector<Vector2> vertices;
+int flag = -1;
+int MouseX;
+int MouseY;
+int offsetX = 330;
+int offsetY = 0;
+
+struct Mode_Display {
+	bool openImg;
+	bool triangulation;
+};
+
+Mode_Display Current_Display;
 
 // selection part
 enum PictureSelectionMode
@@ -28,6 +52,20 @@ TwEnumVal pictureSelectionModeEV[] = {
 	{Gingerman2, "Ginger Man2"},
 };
 TwType pictureSelectionModeType;
+
+void LoadImg(string path);
+void Triangulation();
+
+int search(Vector2 pData, std::vector<Vector2>& vertices)
+{
+	for (int i = 0; i < vertices.size(); i++)
+	{
+		if (vertices[i][0] == pData[0] && vertices[i][1] == pData[1])
+			return i;
+}
+	vertices.push_back(pData);
+	return -1;
+}
 
 void SetupGUI() {
 #ifdef _MSC_VER
@@ -50,18 +88,24 @@ void SetupGUI() {
 
 void My_Init()
 {
+	ImageEdge = new vavImage;
+	test_1 = new Tri_Mesh;
+
+	LoadImg("../Assets/pictures/gingerbread_man.bmp");
+	Triangulation();
+
 	glClearColor(0.5f, 0.5f, 1.0f, 1.0f);
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
 
 	shader = Shader("../Assets/shaders/vertex.vs.glsl", "../Assets/shaders/fragment.fs.glsl");
 
-	float vertices[] = {
+	/*float vertices[] = {
 	-0.5f, -0.5f, 0.0f,
 	 0.5f, -0.5f, 0.0f,
 	 0.0f,  0.5f, 0.0f
 	};
-
+`
 	unsigned int VBO;
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
@@ -70,13 +114,83 @@ void My_Init()
 	// 2. copy our vertices array in a buffer for OpenGL to use
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(m->), vertices, GL_STATIC_DRAW);
+	//glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 	// 3. then set our vertex attributes pointers
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
+	*/
+}
+
+void LoadImg(string path) {
+	Current_Display.openImg = 1;
+
+	ImageEdge->ReadImage(path);
+	*ImageEdge = (ImageEdge->CannyEdge());
+
+	std::cout << "Load img :" << ImageEdge->GetHeight() << "*" << ImageEdge->GetWidth() << std::endl;
+}
+
+void Triangulation() {//CGAL Delaunay Triangulation
+	if (Current_Display.openImg)
+	{
+		Current_Display.triangulation = 1;
+		Current_Display.openImg = 0;
+		Triangulate = new TriangulationCgal;
+	//	Vector2s meshPointset;
+		Vector2s ContourPoint = ImageEdge->GetContour();
+
+		for (int i = 0; i < ContourPoint.size(); i += 15)
+		{
+			Triangulate->AddPoint(ContourPoint[i][0], ContourPoint[i][1]);
+		}
+
+		Triangulate->DelaunayMesher2();
+
+		Triangles Tris = Triangulate->GetTriangles();
+		for (int i = 0; i < Tris.size(); i++)
+		{
+			if (!ImageEdge->IsinsidePoint(Tris[i].m_Points[0][0], Tris[i].m_Points[0][1],
+				Tris[i].m_Points[1][0], Tris[i].m_Points[1][1],
+				Tris[i].m_Points[2][0], Tris[i].m_Points[2][1]))
+				continue;
+			m_triangles.push_back(Tris[i]);
+		}
+		std::cout << "m_triangles.size() = " << m_triangles.size() << std::endl;
+
+		std::vector<OMT::VertexHandle> face_vhandles;
+		std::vector<OMT::VertexHandle> vecVH;
+		int idx[3];
+		for (int i = 0; i < m_triangles.size(); i++)
+		{
+			for (int j = 0; j < 3; j++)
+			{
+				Vector2 point2D = m_triangles[i].m_Points[j];
+				if (search(point2D, vertices) == -1)
+				{
+					idx[j] = vecVH.size();
+					vecVH.push_back(test_1->add_vertex(OMT::Point(point2D[0], point2D[1], 0)));
+				}
+				else
+					idx[j] = search(point2D, vertices);
+			}
+			face_vhandles.clear();
+			face_vhandles.push_back(vecVH[idx[0]]);
+			face_vhandles.push_back(vecVH[idx[1]]);
+			face_vhandles.push_back(vecVH[idx[2]]);
+			test_1->add_face(face_vhandles);
+		}
+
+		Arap = new ARAPTool(test_1);
+		if (SaveFile("../Assets/Model/test.obj", Arap->GetMesh()))
+			std::cout << "Success to save test.obj" << std::endl;
+		else
+			std::cout << "Failed to save test.obj" << std::endl;
+
+	}
 }
 
 // GLUT callback. Called to draw the scene.
@@ -87,7 +201,7 @@ void My_Display()
 
 	//Update shaders' input variable
 	///////////////////////////	
-	shader.use();
+	/*shader.use();
 	
 	// set view matrix
 	shader.setUniformMatrix4fv("view", m_camera.GetViewMatrix() * m_camera.GetModelMatrix());
@@ -96,12 +210,17 @@ void My_Display()
 
 	// do something here
 	// set model matrix
-	shader.setUniformMatrix4fv("model", mat4(1.0));
+	shader.setUniformMatrix4fv("model", mat4(0.01));*/
 
-	glBindVertexArray(VAO);
-	glDrawArrays(GL_TRIANGLES, 0, 3);
-	glUseProgram(0);
+	Arap->Render();
+	//glBindVertexArray(VAO);
+	//glDrawArrays(GL_TRIANGLES, 0, 3);
+	//glUseProgram(0);
 
+/*	if (Current_Display.triangulation)
+	{
+		Arap->Render();
+	}*/
 	// draw gui
 	TwDraw();
 	///////////////////////////	
@@ -130,21 +249,29 @@ void My_Timer(int val)
 void My_Mouse(int button, int state, int x, int y)
 {
 	if (!TwEventMouseButtonGLUT(button, state, x, y)) {
-		m_camera.mouseEvents(button, state, x, y);
+	//	m_camera.mouseEvents(button, state, x, y);
 
 		if (button == GLUT_LEFT_BUTTON)
 		{
 			if (state == GLUT_DOWN)
 			{
+				MouseX = x;
+				MouseY = y;
+				flag = Arap->GetVertex(x - offsetX, y - offsetY);						 //get control point ID
+
 				printf("Mouse %d is pressed at (%d, %d)\n", button, x, y);
 			}
 			else if (state == GLUT_UP)
 			{
+
+				if(x == MouseX && MouseY == y)
+					Arap->OnMouse(x - offsetX, y - offsetY, CtrlOP::Add);
 				printf("Mouse %d is released at (%d, %d)\n", button, x, y);
 			}
 		}
 		else if (button == GLUT_RIGHT_BUTTON)
 		{
+			Arap->OnMouse(x - offsetX, y - offsetY, CtrlOP::Remove);
 			printf("Mouse %d is pressed\n", button);
 		}
 		printf("%d %d %d %d\n", button, state, x, y);
@@ -185,6 +312,10 @@ void My_SpecialKeys(int key, int x, int y)
 void My_Mouse_Moving(int x, int y) {
 	if (!TwEventMouseMotionGLUT(x, y)) {
 		m_camera.mouseMoveEvent(x, y);
+		if (flag != -1)
+		{
+			Arap->OnMotion(x- offsetX, y- offsetY, flag);//0.008s
+		}
 	}
 }
 

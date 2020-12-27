@@ -79,8 +79,8 @@
     <LibraryPath>$(SolutionDir)Libs;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(SolutionDir)Includes;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)Libs;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)Includes;$(SolutionDir)Includes/opencv2;$(SolutionDir)Includes/Eigen;$(SolutionDir)Includes/CGAL/include;$(SolutionDir)Includes/CGAL/auxiliary/gmp/include;C:\Users\Liu\Documents\DigitalMeshProcessingP2\Includes\mpfr-3.1.0\include;C:\Users\Liu\Documents\DigitalMeshProcessingP2\Includes\mpir-2.5.1\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)Libs;$(SolutionDir)Libs/opencv;$(SolutionDir)Libs/CGAL;$(SolutionDir)Libs/boost;C:\Users\Liu\Documents\DigitalMeshProcessingP2\Includes\mpfr-3.1.0\lib;C:\Users\Liu\Documents\DigitalMeshProcessingP2\Includes\mpir-2.5.1\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -126,23 +126,34 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>../DLLs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_USE_MATH_DEFINES;CGAL_NO_AUTOLINK;_CONSOLE;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>freeglut.lib;glew32.lib;glew32s.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>freeglut.lib;glew32.lib;glew32s.lib;opengl32.lib;OpenMeshCore.lib;opencv_world412.lib;libmpfr-4.lib;libgmp-10.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ARAPTool.cpp" />
+    <ClCompile Include="GUA_OM.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Source.cpp" />
+    <ClCompile Include="TriangulationCgal.cpp" />
+    <ClCompile Include="vavImage.cpp" />
     <ClCompile Include="ViewManager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ARAPTool.h" />
     <ClInclude Include="Common.h" />
+    <ClInclude Include="GUA_OM.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Shader.h" />
+    <ClInclude Include="TriangulationBase.h" />
+    <ClInclude Include="TriangulationCgal.h" />
+    <ClInclude Include="vavImage.h" />
     <ClInclude Include="ViewManager.h" />
   </ItemGroup>
   <ItemGroup>
