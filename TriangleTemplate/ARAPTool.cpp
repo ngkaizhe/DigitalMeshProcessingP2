@@ -28,7 +28,6 @@ ARAPTool::ARAPTool(Tri_Mesh* mesh2D)
 	//LoadToShader();
 }
 
-
 ARAPTool::~ARAPTool()
 {
 }
@@ -849,39 +848,29 @@ void ARAPTool::LoadToShader() {
 		vertices.push_back(mesh->point(*v_it));
 	}
 
-	std::vector<Tri_Mesh::Normal> normals;
-	normals.reserve(mesh->n_vertices());
-	for (Tri_Mesh::VertexIter v_it = mesh->vertices_begin(); v_it != mesh->vertices_end(); ++v_it)
-	{
-		normals.push_back(mesh->normal(*v_it));
-	}
-
 	std::vector<unsigned int> indices;
 	indices.reserve(mesh->n_faces() * 3);
 	for (Tri_Mesh::FaceIter f_it = mesh->faces_begin(); f_it != mesh->faces_end(); ++f_it)
 	{
-		for (Tri_Mesh::FaceVertexIter fv_it = mesh->fv_iter(*f_it); fv_it.is_valid(); ++fv_it)
+		for (Tri_Mesh::FaceVertexIter fv_it = mesh->fv_begin(*f_it); fv_it != mesh->fv_end(*f_it); ++fv_it)
 		{
+			//vertices.push_back(mesh->point(*fv_it));
 			indices.push_back(fv_it->idx());
 		}
 	}
 
 	glGenVertexArrays(1, &vao);
+	glGenBuffers(1, &ebo);
+	glGenBuffers(1, &vboVertices);
+
+	// bind the vao
 	glBindVertexArray(vao);
 
-	glGenBuffers(1, &vboVertices);
 	glBindBuffer(GL_ARRAY_BUFFER, vboVertices);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(Tri_Mesh::Point) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 	glEnableVertexAttribArray(0);
 
-	glGenBuffers(1, &vboNormal);
-	glBindBuffer(GL_ARRAY_BUFFER, vboNormal);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(Tri_Mesh::Normal) * normals.size(), &normals[0], GL_STATIC_DRAW);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(1);
-
-	glGenBuffers(1, &ebo);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * indices.size(), &indices[0], GL_STATIC_DRAW);
 
@@ -893,18 +882,40 @@ void ARAPTool::Render(Shader shader)
 {
 	if (mesh != NULL)
 	{
-		xScale = 482;
-		yScale = 604;
+		if (!hasLoaded) {
+			hasLoaded = true;
+			LoadToShader();
+
+			std::cout << "\n\n" << "Total Faces to be Render = " << mesh->n_faces() * 3 << "\n\n";
+			
+			int i = 0;
+			for (Tri_Mesh::VertexIter v_it = mesh->vertices_begin(); v_it != mesh->vertices_end(); ++v_it) {
+				// std::cout << "\n\nVertex id -> " << i << ", \nVertex Coordinates -> " << mesh->point(*v_it) << "\n\n";
+				i++;
+			}
+		}
+
+		//xScale = 482;
+		xScale = 48;
+		//yScale = 604;
+		yScale = 60;
 
 		glm::mat4 modelMat = glm::mat4(1.0);
 		// modelMat = glm::translate(modelMat, glm::vec3(0.5, -1, 0));
-		modelMat = glm::scale(modelMat, glm::vec3(1 / xScale, 1 / yScale, 0));
+		modelMat = glm::scale(modelMat, glm::vec3(1 / xScale, 1 / yScale, 1));
 
-		// set the model value
+		// set the model matrix value
 		shader.setUniformMatrix4fv("model", modelMat);
+		shader.setUniform3fv("color", glm::vec3(1.0, 0, 0));
+
+		glBindVertexArray(vao);
+		// ebo render
+		std::cout << "\n\n" << "Total Faces to be Render = " << mesh->n_faces() * 3 << "\n\n";
+		glDrawElements(GL_TRIANGLES, mesh->n_faces() * 3, GL_UNSIGNED_INT, 0);
+		glBindVertexArray(0);
 
 		// draw mesh with line and triangle
-		mesh->Render(shader);
+		// mesh->Render(shader);
 		
 		// draw control point
 		if (false) {

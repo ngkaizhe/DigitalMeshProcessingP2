@@ -212,7 +212,6 @@ void My_Timer(int val)
 void My_Mouse(int button, int state, int x, int y)
 {
 	if (!TwEventMouseButtonGLUT(button, state, x, y)) {
-	//	m_camera.mouseEvents(button, state, x, y);
 
 		if (button == GLUT_LEFT_BUTTON)
 		{
