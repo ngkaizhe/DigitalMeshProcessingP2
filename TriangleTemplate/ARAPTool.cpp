@@ -4,7 +4,7 @@
 #include <iomanip>
 #include <string>
 
-ARAPTool::ARAPTool(Tri_Mesh* mesh2D)
+ARAPTool::ARAPTool(Tri_Mesh* mesh2D, int pictureHeight, int pictureWidth)
 {
 	mesh = mesh2D;
 
@@ -24,7 +24,11 @@ ARAPTool::ARAPTool(Tri_Mesh* mesh2D)
 	preCompF();
 	preCompH();
 
+	// init ctrl point
 	totalCtrlPoint = 0;
+	// init picture size
+	xScale = pictureWidth;
+	yScale = pictureHeight;
 }
 
 ARAPTool::~ARAPTool()
@@ -862,12 +866,12 @@ void ARAPTool::Render(Shader shader)
 	{
 		ReBind();
 
-		xScale = 482;
-		yScale = 604;
-
 		glm::mat4 modelMat = glm::mat4(1.0);
 		// normalize the flip y axis
-		modelMat = glm::scale(modelMat, glm::vec3(1 / xScale, -1 / yScale, 1));
+		modelMat = glm::scale(modelMat, glm::vec3(1 / xScale * imageScale, -1 / yScale * imageScale, 1));
+		// move to middle
+		modelMat = glm::translate(modelMat, glm::vec3(-xScale / 2.0, -yScale / 2.0, 0));
+
 		// set the model matrix value
 		shader.setUniformMatrix4fv("model", modelMat);
 

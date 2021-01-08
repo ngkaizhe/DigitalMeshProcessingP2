@@ -6,6 +6,8 @@
 #include <Eigen/Dense>
 #include <vector>
 
+extern float imageScale;
+
 enum CtrlOP
 {
 	Add,
@@ -21,7 +23,7 @@ struct CtrlPoint
 class ARAPTool
 {
 public:
-	ARAPTool(Tri_Mesh* mesh2D);
+	ARAPTool(Tri_Mesh* mesh2D, int pictureHeight, int pictureWidth);
 	~ARAPTool();
 
 	std::vector<CtrlPoint> GetCtrlPoint();

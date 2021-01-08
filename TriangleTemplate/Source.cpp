@@ -14,11 +14,25 @@ using namespace glm;
 using namespace std;
 
 float			aspect;
-ViewManager		m_camera;
-
 Shader shader;
-
 unsigned int VAO;
+
+// screen size
+int ScreenHeight = 800;
+int ScreenWidth = 600;
+
+// picture size
+int pictureHeight;
+int pictureWidth;
+
+// image scale
+float imageScale = 2;
+
+// boundary
+int leftBoundary;
+int topBoundary;
+int rightBottomBoundary;
+int bottomBoundary;
 
 vavImage* ImageEdge = NULL;	   //find contour
 TriangulationCgal* Triangulate = NULL;	   //Delaunay triangulation	
@@ -33,8 +47,6 @@ std::vector<Vector2> vertices;
 int flag = -1;
 int MouseX;
 int MouseY;
-int offsetX = 330;
-int offsetY = 0;
 
 struct Mode_Display {
 	bool openImg;
@@ -61,6 +73,7 @@ void LoadImg(string path);
 void Triangulation();
 
 void DumpInfo(void);
+glm::vec2 CalculateScreenSpaceToPixelSpace(glm::vec2 ScreenSpaceValue);
 
 int search(Vector2 pData, std::vector<Vector2>& vertices)
 {
@@ -113,6 +126,16 @@ void LoadImg(string path) {
 	*ImageEdge = (ImageEdge->CannyEdge());
 
 	std::cout << "Load img :" << ImageEdge->GetHeight() << "*" << ImageEdge->GetWidth() << std::endl;
+
+	pictureHeight = ImageEdge->GetWidth();
+	pictureWidth = ImageEdge->GetHeight();
+
+	// calculate the left top boundary and right bottom boundary of image in screen space
+	leftBoundary = pictureWidth / 2 * ((2 - imageScale) / 2);
+	rightBottomBoundary = pictureWidth - (pictureWidth / 2 * ((2 - imageScale) / 2));
+
+	topBoundary = pictureHeight / 2 * ((2 - imageScale) / 2);
+	bottomBoundary = pictureHeight - (pictureHeight / 2 * ((2 - imageScale) / 2));
 }
 
 void Triangulation() {//CGAL Delaunay Triangulation
@@ -166,7 +189,7 @@ void Triangulation() {//CGAL Delaunay Triangulation
 		}
 
 		// init our rigid model from the triangulated mesh
-		Arap = new ARAPTool(test_1);
+		Arap = new ARAPTool(test_1, pictureHeight, pictureWidth);
 		
 		// save the mesh to test.obj
 		if (SaveFile("../Assets/Model/test.obj", Arap->GetMesh()))
@@ -175,6 +198,16 @@ void Triangulation() {//CGAL Delaunay Triangulation
 			std::cout << "Failed to save test.obj" << std::endl;
 
 	}
+}
+
+glm::vec2 CalculateScreenSpaceToPixelSpace(glm::vec2 ScreenSpaceValue) {
+	ScreenSpaceValue.x -= leftBoundary;
+	ScreenSpaceValue.y -= topBoundary;
+
+	ScreenSpaceValue.x = ScreenSpaceValue.x / ScreenWidth * pictureWidth;
+	ScreenSpaceValue.y = ScreenSpaceValue.y / ScreenHeight * pictureHeight;
+
+	return ScreenSpaceValue;
 }
 
 // GLUT callback. Called to draw the scene.
@@ -200,7 +233,6 @@ void My_Display()
 void My_Reshape(int width, int height)
 {
 	aspect = width * 1.0f / height;
-	m_camera.SetWindowSize(width, height);
 
 	glViewport(0, 0, width, height);
 
@@ -219,30 +251,31 @@ void My_Timer(int val)
 void My_Mouse(int button, int state, int x, int y)
 {
 	if (!TwEventMouseButtonGLUT(button, state, x, y)) {
+		glm::vec2 pixelSpaceValue = CalculateScreenSpaceToPixelSpace(glm::vec2(x, y));
+
 		if (button == GLUT_LEFT_BUTTON)
 		{
 			if (state == GLUT_DOWN)
 			{
 				MouseX = x;
 				MouseY = y;
-				flag = Arap->GetVertex(x - offsetX, y - offsetY);						 //get control point ID
+				flag = Arap->GetVertex(pixelSpaceValue.x, pixelSpaceValue.y);						 //get control point ID
 
 				printf("Mouse %d is pressed at (%d, %d)\n", button, x, y);
 			}
 			else if (state == GLUT_UP)
 			{
 				if (x == MouseX && MouseY == y)
-					Arap->OnMouse(x - offsetX, y - offsetY, CtrlOP::Add);
+					Arap->OnMouse(pixelSpaceValue.x, pixelSpaceValue.y, CtrlOP::Add);
 				printf("Mouse %d is released at (%d, %d)\n", button, x, y);
 			}
 		}
 		else if (button == GLUT_RIGHT_BUTTON)
 		{
-			Arap->OnMouse(x - offsetX, y - offsetY, CtrlOP::Remove);
+			Arap->OnMouse(pixelSpaceValue.x, pixelSpaceValue.y, CtrlOP::Remove);
 			printf("Mouse %d is pressed\n", button);
 		}
 		
-		m_camera.mouseEvents(button, state, x, y);
 	}
 }
 
@@ -251,7 +284,6 @@ void My_Keyboard(unsigned char key, int x, int y)
 {
 	if (!TwEventKeyboardGLUT(key, x, y))
 	{
-		m_camera.keyEvents(key);
 		printf("Key %c is pressed at (%d, %d)\n", key, x, y);
 	}
 }
@@ -276,17 +308,14 @@ void My_SpecialKeys(int key, int x, int y)
 	}
 }
 
-
 void My_Mouse_Moving(int x, int y) {
 	if (!TwEventMouseMotionGLUT(x, y)) {
-		if (false) {
-			if (flag != -1)
-			{
-				Arap->OnMotion(x - offsetX, y - offsetY, flag);//0.008s
-			}
+		glm::vec2 pixelSpaceValue = CalculateScreenSpaceToPixelSpace(glm::vec2(x, y));
+
+		if (flag != -1)
+		{
+			Arap->OnMotion(pixelSpaceValue.x, pixelSpaceValue.y, flag);//0.008s
 		}
-		
-		m_camera.mouseMoveEvent(x, y);
 	}
 }
 
@@ -306,7 +335,9 @@ int main(int argc, char *argv[])
 #endif
 
 	glutInitWindowPosition(100, 100);
-	glutInitWindowSize(1200, 600);
+
+	glutInitWindowSize(ScreenWidth, ScreenHeight);
+
 	glutCreateWindow("Framework"); // You cannot use OpenGL functions before this line; The OpenGL context must be created first by glutCreateWindow()!
 #ifdef _MSC_VER
 	glewInit();
