@@ -219,30 +219,28 @@ void My_Timer(int val)
 void My_Mouse(int button, int state, int x, int y)
 {
 	if (!TwEventMouseButtonGLUT(button, state, x, y)) {
-		if (false) {
-			if (button == GLUT_LEFT_BUTTON)
+		if (button == GLUT_LEFT_BUTTON)
+		{
+			if (state == GLUT_DOWN)
 			{
-				if (state == GLUT_DOWN)
-				{
-					MouseX = x;
-					MouseY = y;
-					flag = Arap->GetVertex(x - offsetX, y - offsetY);						 //get control point ID
+				MouseX = x;
+				MouseY = y;
+				flag = Arap->GetVertex(x - offsetX, y - offsetY);						 //get control point ID
 
-					printf("Mouse %d is pressed at (%d, %d)\n", button, x, y);
-				}
-				else if (state == GLUT_UP)
-				{
-
-					if (x == MouseX && MouseY == y)
-						Arap->OnMouse(x - offsetX, y - offsetY, CtrlOP::Add);
-					printf("Mouse %d is released at (%d, %d)\n", button, x, y);
-				}
+				printf("Mouse %d is pressed at (%d, %d)\n", button, x, y);
 			}
-			else if (button == GLUT_RIGHT_BUTTON)
+			else if (state == GLUT_UP)
 			{
-				Arap->OnMouse(x - offsetX, y - offsetY, CtrlOP::Remove);
-				printf("Mouse %d is pressed\n", button);
+
+				if (x == MouseX && MouseY == y)
+					Arap->OnMouse(x - offsetX, y - offsetY, CtrlOP::Add);
+				printf("Mouse %d is released at (%d, %d)\n", button, x, y);
 			}
+		}
+		else if (button == GLUT_RIGHT_BUTTON)
+		{
+			Arap->OnMouse(x - offsetX, y - offsetY, CtrlOP::Remove);
+			printf("Mouse %d is pressed\n", button);
 		}
 		
 		m_camera.mouseEvents(button, state, x, y);

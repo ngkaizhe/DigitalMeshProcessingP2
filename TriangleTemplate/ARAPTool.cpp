@@ -819,25 +819,7 @@ void ARAPTool::OnMouse(int x, int y, CtrlOP op)
 	}
 }
 
-bool ARAPTool::LoadModel()
-{
-	OpenMesh::IO::Options ropt;
-	if (OpenMesh::IO::read_mesh(*mesh, "../Assets/Model/test.obj", ropt))
-	{
-		if (!ropt.check(OpenMesh::IO::Options::VertexNormal) && mesh->has_vertex_normals())
-		{
-			mesh->request_face_normals();
-			mesh->update_normals();
-			mesh->release_face_normals();
-		}
-		std::cout << "Load Model Success\n";
-		return true;
-	}
-
-	return false;
-}
-
-void ARAPTool::LoadToShader() {
+void ARAPTool::ReBind() {
 	std::vector<glm::vec3> vertices;
 	vertices.reserve(mesh->n_vertices());
 	for (Tri_Mesh::VertexIter v_it = mesh->vertices_begin(); v_it != mesh->vertices_end(); ++v_it)

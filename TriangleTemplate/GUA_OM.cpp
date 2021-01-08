@@ -477,24 +477,19 @@ void Tri_Mesh::Render(Shader shader) {
 
 void Tri_Mesh::Render_SolidWireframe(Shader shader)
 {
-	FIter f_it;
-	FVIter	fv_it;
-
 	// render the face
 	// shader
 	shader.use();
 	shader.setUniform3fv("color", glm::vec3(1.0, 0.96, 0.49));
 	glBindVertexArray(face_vao);
-
 	glDrawElements(GL_TRIANGLES, n_faces() * 3, GL_UNSIGNED_INT, 0);
+	glBindVertexArray(0);
 	
 	// render the line
 	// shader
 	shader.setUniform3fv("color", glm::vec3(1.0, 0, 0));
 	glBindVertexArray(line_vao);
-
 	glDrawElements(GL_LINES, n_edges() * 2, GL_UNSIGNED_INT, 0);
-	
 	glBindVertexArray(0);
 }
 

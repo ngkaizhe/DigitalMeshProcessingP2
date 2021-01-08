@@ -26,8 +26,8 @@ public:
 
 	std::vector<CtrlPoint> GetCtrlPoint();
 	Tri_Mesh* GetMesh();
-	bool LoadModel();
-	void LoadToShader();
+
+	void ReBind();
 	void Render(Shader shader);
 	void OnMotion(int x, int y, int ctrl_index);
 	void OnMouse(int x, int y, CtrlOP op);
