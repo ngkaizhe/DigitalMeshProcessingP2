@@ -71,7 +71,5 @@ private:
 	// the original image scale
 	float xScale;
 	float yScale;
-
-	bool hasLoaded = false;
 };
 

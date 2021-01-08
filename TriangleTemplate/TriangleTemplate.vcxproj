@@ -139,7 +139,6 @@
   <ItemGroup>
     <ClCompile Include="ARAPTool.cpp" />
     <ClCompile Include="GUA_OM.cpp" />
-    <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Source.cpp" />
     <ClCompile Include="TriangulationCgal.cpp" />
@@ -150,7 +149,6 @@
     <ClInclude Include="ARAPTool.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="GUA_OM.h" />
-    <ClInclude Include="Mesh.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="TriangulationBase.h" />
     <ClInclude Include="TriangulationCgal.h" />

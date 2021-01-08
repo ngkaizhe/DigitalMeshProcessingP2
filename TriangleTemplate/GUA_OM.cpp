@@ -484,11 +484,9 @@ void Tri_Mesh::Render_SolidWireframe(Shader shader)
 	// shader
 	shader.use();
 	shader.setUniform3fv("color", glm::vec3(1.0, 0.96, 0.49));
-	glBindVertexArray(vao);
+	glBindVertexArray(face_vao);
 
-	std::cout << "\n\n" << "Total Vertices to Render = " << n_vertices() << "\n\n";
-
-	glDrawElements(GL_TRIANGLES, n_vertices(), GL_UNSIGNED_INT, 0);
+	glDrawElements(GL_TRIANGLES, n_faces() * 3, GL_UNSIGNED_INT, 0);
 
 	// opengl 1.0
 	if (false) {
@@ -511,6 +509,10 @@ void Tri_Mesh::Render_SolidWireframe(Shader shader)
 	
 	// render the line
 	// shader
+	shader.setUniform3fv("color", glm::vec3(1.0, 0, 0));
+	glBindVertexArray(line_vao);
+
+	glDrawElements(GL_LINES, n_edges() * 2, GL_UNSIGNED_INT, 0);
 
 	// opengl 1.0
 	if (false) {
@@ -536,6 +538,87 @@ void Tri_Mesh::Render_SolidWireframe(Shader shader)
 	}
 	
 	glBindVertexArray(0);
+}
+
+void Tri_Mesh::ReBind() {
+
+	// rebind face_vao starts
+	GLuint ebo;
+	GLuint vboVertices;
+
+	// vao
+	glGenVertexArrays(1, &face_vao);
+	// faces
+	glGenBuffers(1, &ebo);
+	// vertices
+	glGenBuffers(1, &vboVertices);
+
+	std::vector<glm::vec3> vertices;
+	vertices.reserve(n_vertices());
+	for (Tri_Mesh::VertexIter v_it = vertices_begin(); v_it != vertices_end(); ++v_it)
+	{
+		glm::vec3 v1 = glm::vec3(point(*v_it)[0], point(*v_it)[1], point(*v_it)[2]);
+		vertices.push_back(v1);
+	}
+
+	std::vector<unsigned int> faces_indices;
+	faces_indices.reserve(n_faces() * 3);
+	for (Tri_Mesh::FaceIter f_it = faces_begin(); f_it != faces_end(); ++f_it)
+	{
+		for (Tri_Mesh::FaceVertexIter fv_it = fv_begin(*f_it); fv_it != fv_end(*f_it); ++fv_it)
+		{
+			faces_indices.push_back(fv_it->idx());
+		}
+	}
+
+	glBindVertexArray(face_vao);
+
+	// vertices
+	glBindBuffer(GL_ARRAY_BUFFER, vboVertices);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(0);
+
+	// faces
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * faces_indices.size(), &faces_indices[0], GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+	// rebind face_vao ends
+
+	// rebind line_vao starts
+	// vao
+	glGenVertexArrays(1, &line_vao);
+	// faces
+	glGenBuffers(1, &ebo);
+	// vertices
+	glGenBuffers(1, &vboVertices);
+
+	std::vector<unsigned int> line_indices;
+	line_indices.reserve(n_edges() * 2);
+	for (Tri_Mesh::EdgeIter e_it = edges_begin(); e_it != edges_end(); ++e_it)
+	{
+		Tri_Mesh::HalfedgeHandle heh = halfedge_handle(*e_it, 0);
+		line_indices.push_back(to_vertex_handle(heh).idx());
+		line_indices.push_back(from_vertex_handle(heh).idx());
+	}
+
+	glBindVertexArray(line_vao);
+
+	// vertices
+	glBindBuffer(GL_ARRAY_BUFFER, vboVertices);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(0);
+
+	// lines
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * line_indices.size(), &line_indices[0], GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+	// rebind line_vao ends
 }
 
 // unused
@@ -597,41 +680,6 @@ void Tri_Mesh::Render_Point()
 		glVertex3dv(point(*v_it).data());
 	}
 	glEnd();
-}
-
-void Tri_Mesh::ReBind() {
-
-	std::vector<Tri_Mesh::Point> vertices;
-	vertices.reserve(n_vertices());
-	for (Tri_Mesh::VertexIter v_it = vertices_begin(); v_it != vertices_end(); ++v_it)
-	{
-		vertices.push_back(point(*v_it));
-	}
-
-	std::vector<unsigned int> indices;
-	indices.reserve(n_faces() * 3);
-	for (Tri_Mesh::FaceIter f_it = faces_begin(); f_it != faces_end(); ++f_it)
-	{
-		for (Tri_Mesh::FaceVertexIter fv_it = fv_iter(*f_it); fv_it.is_valid(); ++fv_it)
-		{
-			indices.push_back(fv_it->idx());
-		}
-	}
-
-	glBindVertexArray(vao);
-
-	// vertices
-	glBindBuffer(GL_ARRAY_BUFFER, vboVertices);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(Tri_Mesh::Point) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(0);
-
-	// faces
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * indices.size(), &indices[0], GL_STATIC_DRAW);
-
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
 }
 
 bool ReadFile(std::string _fileName, Tri_Mesh* _mesh)

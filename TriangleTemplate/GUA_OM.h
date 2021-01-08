@@ -217,13 +217,6 @@ class Tri_Mesh :public OMT::Model
 public:
 	Tri_Mesh()
 	{
-		// vao
-		glGenVertexArrays(1, &vao);
-		// faces
-		glGenBuffers(1, &ebo);
-		// vertices
-		glGenBuffers(1, &vboVertices);
-
 	}
 	//-------Edit Flag-------//
 	bool                                       Delete_Flag;
@@ -246,15 +239,14 @@ public:
 	// used
 	void Render_SolidWireframe(Shader shader);
 
+private:
+	GLuint face_vao;
+	GLuint line_vao;
+
 	// unused
 	void Render_Solid();
 	void Render_Wireframe();
 	void Render_Point();
-
-private:
-	GLuint vao;
-	GLuint ebo;
-	GLuint vboVertices;
 };
 
 ///*======================================================================*/

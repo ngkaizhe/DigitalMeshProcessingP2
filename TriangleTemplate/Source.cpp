@@ -1,18 +1,20 @@
 ﻿#include"stdio.h"
 #include"Common.h"
-#include "ViewManager.h"
 #include"Shader.h"
 #include <AntTweakBar.h>
+#include"ViewManager.h"
 
 #include "ARAPTool.h"
 #include "vavImage.h"
 #include "TriangulationCgal.h"
 #include "GUA_OM.h"
 
+
 using namespace glm;
 using namespace std;
 
 float			aspect;
+ViewManager		m_camera;
 
 Shader shader;
 
@@ -57,6 +59,8 @@ TwType pictureSelectionModeType;
 
 void LoadImg(string path);
 void Triangulation();
+
+void DumpInfo(void);
 
 int search(Vector2 pData, std::vector<Vector2>& vertices)
 {
@@ -179,6 +183,7 @@ void My_Display()
 	glClearColor(0.5f, 0.5f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+
 	Arap->Render(shader);
 
 /*	if (Current_Display.triangulation)
@@ -195,6 +200,8 @@ void My_Display()
 void My_Reshape(int width, int height)
 {
 	aspect = width * 1.0f / height;
+	m_camera.SetWindowSize(width, height);
+
 	glViewport(0, 0, width, height);
 
 	// Send the new window size to AntTweakBar
@@ -212,32 +219,33 @@ void My_Timer(int val)
 void My_Mouse(int button, int state, int x, int y)
 {
 	if (!TwEventMouseButtonGLUT(button, state, x, y)) {
-
-		if (button == GLUT_LEFT_BUTTON)
-		{
-			if (state == GLUT_DOWN)
+		if (false) {
+			if (button == GLUT_LEFT_BUTTON)
 			{
-				MouseX = x;
-				MouseY = y;
-				flag = Arap->GetVertex(x - offsetX, y - offsetY);						 //get control point ID
+				if (state == GLUT_DOWN)
+				{
+					MouseX = x;
+					MouseY = y;
+					flag = Arap->GetVertex(x - offsetX, y - offsetY);						 //get control point ID
 
-				printf("Mouse %d is pressed at (%d, %d)\n", button, x, y);
+					printf("Mouse %d is pressed at (%d, %d)\n", button, x, y);
+				}
+				else if (state == GLUT_UP)
+				{
+
+					if (x == MouseX && MouseY == y)
+						Arap->OnMouse(x - offsetX, y - offsetY, CtrlOP::Add);
+					printf("Mouse %d is released at (%d, %d)\n", button, x, y);
+				}
 			}
-			else if (state == GLUT_UP)
+			else if (button == GLUT_RIGHT_BUTTON)
 			{
-
-				if(x == MouseX && MouseY == y)
-					Arap->OnMouse(x - offsetX, y - offsetY, CtrlOP::Add);
-				printf("Mouse %d is released at (%d, %d)\n", button, x, y);
+				Arap->OnMouse(x - offsetX, y - offsetY, CtrlOP::Remove);
+				printf("Mouse %d is pressed\n", button);
 			}
 		}
-		else if (button == GLUT_RIGHT_BUTTON)
-		{
-			Arap->OnMouse(x - offsetX, y - offsetY, CtrlOP::Remove);
-			printf("Mouse %d is pressed\n", button);
-		}
-
-		printf("%d %d %d %d\n", button, state, x, y);
+		
+		m_camera.mouseEvents(button, state, x, y);
 	}
 }
 
@@ -246,6 +254,7 @@ void My_Keyboard(unsigned char key, int x, int y)
 {
 	if (!TwEventKeyboardGLUT(key, x, y))
 	{
+		m_camera.keyEvents(key);
 		printf("Key %c is pressed at (%d, %d)\n", key, x, y);
 	}
 }
@@ -273,10 +282,14 @@ void My_SpecialKeys(int key, int x, int y)
 
 void My_Mouse_Moving(int x, int y) {
 	if (!TwEventMouseMotionGLUT(x, y)) {
-		if (flag != -1)
-		{
-			Arap->OnMotion(x- offsetX, y- offsetY, flag);//0.008s
+		if (false) {
+			if (flag != -1)
+			{
+				Arap->OnMotion(x - offsetX, y - offsetY, flag);//0.008s
+			}
 		}
+		
+		m_camera.mouseMoveEvent(x, y);
 	}
 }
 
@@ -305,7 +318,7 @@ int main(int argc, char *argv[])
 	SetupGUI();
 
 	//Print debug information 
-	ViewManager::DumpInfo();
+	DumpInfo();
 	////////////////////
 
 	//Call custom initialize function
@@ -327,4 +340,13 @@ int main(int argc, char *argv[])
 	glutMainLoop();
 
 	return 0;
+}
+
+// Print OpenGL context related information.
+void DumpInfo(void)
+{
+	printf("Vendor: %s\n", glGetString(GL_VENDOR));
+	printf("Renderer: %s\n", glGetString(GL_RENDERER));
+	printf("Version: %s\n", glGetString(GL_VERSION));
+	printf("GLSL: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
 }

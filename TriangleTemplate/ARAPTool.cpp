@@ -23,9 +23,6 @@ ARAPTool::ARAPTool(Tri_Mesh* mesh2D)
 	preCompG();
 	preCompF();
 	preCompH();
-
-	//LoadModel();
-	//LoadToShader();
 }
 
 ARAPTool::~ARAPTool()
@@ -841,11 +838,12 @@ bool ARAPTool::LoadModel()
 }
 
 void ARAPTool::LoadToShader() {
-	std::vector<Tri_Mesh::Point> vertices;
+	std::vector<glm::vec3> vertices;
 	vertices.reserve(mesh->n_vertices());
 	for (Tri_Mesh::VertexIter v_it = mesh->vertices_begin(); v_it != mesh->vertices_end(); ++v_it)
 	{
-		vertices.push_back(mesh->point(*v_it));
+		glm::vec3 v1 = glm::vec3(mesh->point(*v_it)[0], mesh->point(*v_it)[1], mesh->point(*v_it)[2]);
+		vertices.push_back(v1);
 	}
 
 	std::vector<unsigned int> indices;
@@ -854,7 +852,6 @@ void ARAPTool::LoadToShader() {
 	{
 		for (Tri_Mesh::FaceVertexIter fv_it = mesh->fv_begin(*f_it); fv_it != mesh->fv_end(*f_it); ++fv_it)
 		{
-			//vertices.push_back(mesh->point(*fv_it));
 			indices.push_back(fv_it->idx());
 		}
 	}
@@ -867,7 +864,7 @@ void ARAPTool::LoadToShader() {
 	glBindVertexArray(vao);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vboVertices);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(Tri_Mesh::Point) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 	glEnableVertexAttribArray(0);
 
@@ -882,40 +879,18 @@ void ARAPTool::Render(Shader shader)
 {
 	if (mesh != NULL)
 	{
-		if (!hasLoaded) {
-			hasLoaded = true;
-			LoadToShader();
-
-			std::cout << "\n\n" << "Total Faces to be Render = " << mesh->n_faces() * 3 << "\n\n";
-			
-			int i = 0;
-			for (Tri_Mesh::VertexIter v_it = mesh->vertices_begin(); v_it != mesh->vertices_end(); ++v_it) {
-				// std::cout << "\n\nVertex id -> " << i << ", \nVertex Coordinates -> " << mesh->point(*v_it) << "\n\n";
-				i++;
-			}
-		}
-
-		//xScale = 482;
-		xScale = 48;
-		//yScale = 604;
-		yScale = 60;
+		xScale = 482;
+		yScale = 604;
 
 		glm::mat4 modelMat = glm::mat4(1.0);
-		// modelMat = glm::translate(modelMat, glm::vec3(0.5, -1, 0));
-		modelMat = glm::scale(modelMat, glm::vec3(1 / xScale, 1 / yScale, 1));
+		// normalize the flip y axis
+		modelMat = glm::scale(modelMat, glm::vec3(1 / xScale, -1 / yScale, 1));
 
 		// set the model matrix value
 		shader.setUniformMatrix4fv("model", modelMat);
-		shader.setUniform3fv("color", glm::vec3(1.0, 0, 0));
-
-		glBindVertexArray(vao);
-		// ebo render
-		std::cout << "\n\n" << "Total Faces to be Render = " << mesh->n_faces() * 3 << "\n\n";
-		glDrawElements(GL_TRIANGLES, mesh->n_faces() * 3, GL_UNSIGNED_INT, 0);
-		glBindVertexArray(0);
 
 		// draw mesh with line and triangle
-		// mesh->Render(shader);
+		mesh->Render(shader);
 		
 		// draw control point
 		if (false) {
