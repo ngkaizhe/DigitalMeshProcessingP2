@@ -24,8 +24,8 @@ ARAPTool::ARAPTool(Tri_Mesh* mesh2D)
 	preCompF();
 	preCompH();
 
-	LoadModel();
-	LoadToShader();
+	//LoadModel();
+	//LoadToShader();
 }
 
 
