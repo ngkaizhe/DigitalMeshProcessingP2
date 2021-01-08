@@ -23,6 +23,8 @@ ARAPTool::ARAPTool(Tri_Mesh* mesh2D)
 	preCompG();
 	preCompF();
 	preCompH();
+
+	totalCtrlPoint = 0;
 }
 
 ARAPTool::~ARAPTool()
@@ -820,38 +822,35 @@ void ARAPTool::OnMouse(int x, int y, CtrlOP op)
 }
 
 void ARAPTool::ReBind() {
+	totalCtrlPoint = 0;
+
 	std::vector<glm::vec3> vertices;
 	vertices.reserve(mesh->n_vertices());
 	for (Tri_Mesh::VertexIter v_it = mesh->vertices_begin(); v_it != mesh->vertices_end(); ++v_it)
 	{
-		glm::vec3 v1 = glm::vec3(mesh->point(*v_it)[0], mesh->point(*v_it)[1], mesh->point(*v_it)[2]);
-		vertices.push_back(v1);
-	}
+		int id = v_it->idx();
 
-	std::vector<unsigned int> indices;
-	indices.reserve(mesh->n_faces() * 3);
-	for (Tri_Mesh::FaceIter f_it = mesh->faces_begin(); f_it != mesh->faces_end(); ++f_it)
-	{
-		for (Tri_Mesh::FaceVertexIter fv_it = mesh->fv_begin(*f_it); fv_it != mesh->fv_end(*f_it); ++fv_it)
+		if (flags[id] > 0)
 		{
-			indices.push_back(fv_it->idx());
+			Tri_Mesh::Point p = mesh->point(*v_it);
+			glm::vec3 v1 = glm::vec3(p[0], p[1], 0);
+			vertices.push_back(v1);
+
+			totalCtrlPoint++;
 		}
 	}
 
-	glGenVertexArrays(1, &vao);
-	glGenBuffers(1, &ebo);
+	GLuint vboVertices;
+	glGenVertexArrays(1, &ctrl_point_vao);
 	glGenBuffers(1, &vboVertices);
 
 	// bind the vao
-	glBindVertexArray(vao);
+	glBindVertexArray(ctrl_point_vao);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vboVertices);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 	glEnableVertexAttribArray(0);
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * indices.size(), &indices[0], GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
@@ -861,13 +860,14 @@ void ARAPTool::Render(Shader shader)
 {
 	if (mesh != NULL)
 	{
+		ReBind();
+
 		xScale = 482;
 		yScale = 604;
 
 		glm::mat4 modelMat = glm::mat4(1.0);
 		// normalize the flip y axis
 		modelMat = glm::scale(modelMat, glm::vec3(1 / xScale, -1 / yScale, 1));
-
 		// set the model matrix value
 		shader.setUniformMatrix4fv("model", modelMat);
 
@@ -875,21 +875,13 @@ void ARAPTool::Render(Shader shader)
 		mesh->Render(shader);
 		
 		// draw control point
-		if (false) {
+		if (totalCtrlPoint > 0) {
 			glPointSize(8.0);
-			for (OMT::VIter v_it = mesh->vertices_begin(); v_it != mesh->vertices_end(); ++v_it)
-			{
-				int id = v_it->idx();
-
-				if (flags[id] > 0)
-				{
-					Tri_Mesh::Point  p = mesh->point(*v_it);
-
-					glVertex3f(p[0], p[1], 0);
-				}
-			}
+			shader.setUniform3fv("color", glm::vec3(0, 0, 1));
+			glBindVertexArray(ctrl_point_vao);
+			glDrawArrays(GL_POINTS, 0, totalCtrlPoint);
+			glBindVertexArray(0);
 		}
-		
 	}
 }
 

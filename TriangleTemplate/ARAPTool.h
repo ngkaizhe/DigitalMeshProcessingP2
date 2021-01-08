@@ -64,12 +64,14 @@ private:
 
 	void deform();
 
-	GLuint vao;
-	GLuint ebo;
-	GLuint vboVertices, vboNormal, vboTexCoord;
+	// the ctrl point vao
+	GLuint ctrl_point_vao;
 
 	// the original image scale
 	float xScale;
 	float yScale;
+
+	// the total ctrl point we have
+	int totalCtrlPoint;
 };
 

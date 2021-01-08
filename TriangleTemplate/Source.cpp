@@ -231,7 +231,6 @@ void My_Mouse(int button, int state, int x, int y)
 			}
 			else if (state == GLUT_UP)
 			{
-
 				if (x == MouseX && MouseY == y)
 					Arap->OnMouse(x - offsetX, y - offsetY, CtrlOP::Add);
 				printf("Mouse %d is released at (%d, %d)\n", button, x, y);
