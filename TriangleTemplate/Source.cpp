@@ -20,8 +20,12 @@ unsigned int VAO;
 
 vavImage* ImageEdge = NULL;	   //find contour
 TriangulationCgal* Triangulate = NULL;	   //Delaunay triangulation	
+
+// rigid tool
 ARAPTool* Arap = NULL;
+// the mesh we used
 Tri_Mesh* test_1 = NULL;
+
 Triangles m_triangles;
 std::vector<Vector2> vertices;
 int flag = -1;
@@ -82,7 +86,6 @@ void SetupGUI() {
 	 //Adding season to bar
 	 TwAddVarRW(bar, "SelectionMode", pictureSelectionModeType, &pictureSelectionMode, NULL);
 }
-
 
 void My_Init()
 {
@@ -158,7 +161,10 @@ void Triangulation() {//CGAL Delaunay Triangulation
 			test_1->add_face(face_vhandles);
 		}
 
+		// init our rigid model from the triangulated mesh
 		Arap = new ARAPTool(test_1);
+		
+		// save the mesh to test.obj
 		if (SaveFile("../Assets/Model/test.obj", Arap->GetMesh()))
 			std::cout << "Success to save test.obj" << std::endl;
 		else
@@ -173,7 +179,7 @@ void My_Display()
 	glClearColor(0.5f, 0.5f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	Arap->Render();
+	Arap->Render(shader);
 
 /*	if (Current_Display.triangulation)
 	{

@@ -1,6 +1,7 @@
 #pragma once
 #include "Common.h"
 #include "GUA_OM.h"
+#include "Shader.h"
 #include <Eigen/Sparse>
 #include <Eigen/Dense>
 #include <vector>
@@ -27,7 +28,7 @@ public:
 	Tri_Mesh* GetMesh();
 	bool LoadModel();
 	void LoadToShader();
-	void Render();
+	void Render(Shader shader);
 	void OnMotion(int x, int y, int ctrl_index);
 	void OnMouse(int x, int y, CtrlOP op);
 	void SetCtrlPoints(std::vector<CtrlPoint> pointsToSet);
@@ -66,5 +67,9 @@ private:
 	GLuint vao;
 	GLuint ebo;
 	GLuint vboVertices, vboNormal, vboTexCoord;
+
+	// the original image scale
+	float xScale;
+	float yScale;
 };
 

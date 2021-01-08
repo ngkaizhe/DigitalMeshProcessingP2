@@ -468,6 +468,77 @@ namespace OMP
 	/*======================================================================*/
 };
 /*======================================================================*/
+void Tri_Mesh::Render(Shader shader) {
+	ReBind();
+
+	// render solid wire frame
+	Render_SolidWireframe(shader);
+}
+
+void Tri_Mesh::Render_SolidWireframe(Shader shader)
+{
+	FIter f_it;
+	FVIter	fv_it;
+
+	// render the face
+	// shader
+	shader.use();
+	shader.setUniform3fv("color", glm::vec3(1.0, 0.96, 0.49));
+	glBindVertexArray(vao);
+
+	std::cout << "\n\n" << "Total Vertices to Render = " << n_vertices() << "\n\n";
+
+	glDrawElements(GL_TRIANGLES, n_vertices(), GL_UNSIGNED_INT, 0);
+
+	// opengl 1.0
+	if (false) {
+		glDisable(GL_LIGHTING);
+		glPushAttrib(GL_LIGHTING_BIT);
+		glEnable(GL_POLYGON_OFFSET_FILL);
+		glEnable(GL_DEPTH_TEST);
+		glPolygonOffset(2.0, 2.0);
+		glBegin(GL_TRIANGLES);
+		glColor4f(1.0, 0.96, 0.49, 1.0);
+		for (f_it = faces_begin(); f_it != faces_end(); ++f_it)
+		{
+			for (fv_it = fv_iter(*f_it); fv_it.is_valid(); ++fv_it)
+			{
+				glVertex3f(point(*fv_it)[0], point(*fv_it)[1], point(*fv_it)[2]);
+			}
+		}
+		glEnd();
+	}
+	
+	// render the line
+	// shader
+
+	// opengl 1.0
+	if (false) {
+		glPushAttrib(GL_LIGHTING_BIT);
+		glDisable(GL_LIGHTING);
+		glLineWidth(1.0);
+		glColor3f(1.0, 0.0, 0.0);
+		glBegin(GL_LINES);
+		for (OMT::EIter e_it = edges_begin(); e_it != edges_end(); ++e_it)
+		{
+			OMT::HEHandle _hedge = halfedge_handle(*e_it, 1);
+
+			OMT::Point curVertex = point(from_vertex_handle(_hedge));
+
+			glVertex3f(curVertex[0], curVertex[1], curVertex[2]);
+
+			curVertex = point(to_vertex_handle(_hedge));
+			glVertex3f(curVertex[0], curVertex[1], curVertex[2]);
+		}
+
+		glEnd();
+		glPopAttrib();
+	}
+	
+	glBindVertexArray(0);
+}
+
+// unused
 void Tri_Mesh::Render_Solid()
 {
 	FIter f_it;
@@ -491,65 +562,7 @@ void Tri_Mesh::Render_Solid()
 	glDisable(GL_POLYGON_OFFSET_FILL);
 }
 
-void Tri_Mesh::Render_SolidWireframe()
-{
-	FIter f_it;
-	FVIter	fv_it;
-	float scale = 500.0f;
-	float offsetX = 0.5f;
-	float offsetY = 0.3f;
-
-	/*glPointSize(8.0);
-	glBegin(GL_POINTS);
-	glColor4f(1.0, 0.0, 0.0, 1.0);
-	glVertex3dv(point(vertex_handle(0)));
-	glEnd();*/
-	glDisable(GL_LIGHTING);
-	glPushAttrib(GL_LIGHTING_BIT);
-	glEnable(GL_POLYGON_OFFSET_FILL);
-	glEnable(GL_DEPTH_TEST);
-	glPolygonOffset(2.0, 2.0);
-	glBegin(GL_TRIANGLES);
-	glColor4f(1.0, 0.96, 0.49, 1.0);
-	for (f_it = faces_begin(); f_it != faces_end(); ++f_it)
-	{
-		for (fv_it = fv_iter(*f_it); fv_it.is_valid(); ++fv_it)
-		{
-			//glNormal3dv(normal(fv_it.handle()));
-			//glVertex3dv(point(*fv_it).data());
-			glVertex3f(point(*fv_it)[0] / scale - offsetX, point(*fv_it)[1] / scale - offsetY, point(*fv_it)[2] / scale);
-		}
-	}
-	glEnd();
-
-
-	//glDisable(GL_POLYGON_OFFSET_FILL);
-
-
-	glPushAttrib(GL_LIGHTING_BIT);
-	glDisable(GL_LIGHTING);
-	glLineWidth(1.0);
-	glColor3f(1.0, 0.0, 0.0);
-	glBegin(GL_LINES);
-	for (OMT::EIter e_it = edges_begin(); e_it != edges_end(); ++e_it)
-	{
-		OMT::HEHandle _hedge = halfedge_handle(*e_it, 1);
-
-		OMT::Point curVertex = point(from_vertex_handle(_hedge));
-
-		glVertex3f(curVertex[0] / scale - offsetX, curVertex[1] / scale - offsetY, curVertex[2] / scale);
-
-		//glVertex3dv(curVertex.data());
-
-		curVertex = point(to_vertex_handle(_hedge));
-		glVertex3f(curVertex[0] / scale - offsetX, curVertex[1] / scale - offsetY, curVertex[2] / scale);
-
-		//glVertex3dv(curVertex.data());
-	}
-	glEnd();
-	glPopAttrib();
-}
-
+// unused
 void Tri_Mesh::Render_Wireframe()
 {
 	//glPushAttrib(GL_LIGHTING_BIT);	
@@ -573,6 +586,7 @@ void Tri_Mesh::Render_Wireframe()
 
 }
 
+// unused
 void Tri_Mesh::Render_Point()
 {
 	glPointSize(8.0);
@@ -583,6 +597,41 @@ void Tri_Mesh::Render_Point()
 		glVertex3dv(point(*v_it).data());
 	}
 	glEnd();
+}
+
+void Tri_Mesh::ReBind() {
+
+	std::vector<Tri_Mesh::Point> vertices;
+	vertices.reserve(n_vertices());
+	for (Tri_Mesh::VertexIter v_it = vertices_begin(); v_it != vertices_end(); ++v_it)
+	{
+		vertices.push_back(point(*v_it));
+	}
+
+	std::vector<unsigned int> indices;
+	indices.reserve(n_faces() * 3);
+	for (Tri_Mesh::FaceIter f_it = faces_begin(); f_it != faces_end(); ++f_it)
+	{
+		for (Tri_Mesh::FaceVertexIter fv_it = fv_iter(*f_it); fv_it.is_valid(); ++fv_it)
+		{
+			indices.push_back(fv_it->idx());
+		}
+	}
+
+	glBindVertexArray(vao);
+
+	// vertices
+	glBindBuffer(GL_ARRAY_BUFFER, vboVertices);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(Tri_Mesh::Point) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(0);
+
+	// faces
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * indices.size(), &indices[0], GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
 }
 
 bool ReadFile(std::string _fileName, Tri_Mesh* _mesh)

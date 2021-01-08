@@ -7,8 +7,8 @@
 #include <OpenMesh/Tools/Utils/getopt.h>
 #include <windows.h>
 #include <vector>
-#include <gl/gl.h>
-#include <gl/glu.h>
+#include"Common.h"
+#include"Shader.h"
 
 struct Face_InnerAngle
 {
@@ -217,7 +217,12 @@ class Tri_Mesh :public OMT::Model
 public:
 	Tri_Mesh()
 	{
-
+		// vao
+		glGenVertexArrays(1, &vao);
+		// faces
+		glGenBuffers(1, &ebo);
+		// vertices
+		glGenBuffers(1, &vboVertices);
 
 	}
 	//-------Edit Flag-------//
@@ -233,13 +238,23 @@ public:
 	std::vector<OMT::VHandle>                  Minuspt;
 	std::vector<OMT::VHandle>                  Extrme_Pt;
 
+	// load the mesh vertices and face to shader
+	void ReBind();
+	// render everything
+	void Render(Shader shader);
 
+	// used
+	void Render_SolidWireframe(Shader shader);
+
+	// unused
 	void Render_Solid();
-	void Render_SolidWireframe();
 	void Render_Wireframe();
 	void Render_Point();
 
 private:
+	GLuint vao;
+	GLuint ebo;
+	GLuint vboVertices;
 };
 
 ///*======================================================================*/

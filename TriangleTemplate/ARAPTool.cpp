@@ -825,7 +825,6 @@ void ARAPTool::OnMouse(int x, int y, CtrlOP op)
 
 bool ARAPTool::LoadModel()
 {
-
 	OpenMesh::IO::Options ropt;
 	if (OpenMesh::IO::read_mesh(*mesh, "../Assets/Model/test.obj", ropt))
 	{
@@ -841,7 +840,6 @@ bool ARAPTool::LoadModel()
 
 	return false;
 }
-
 
 void ARAPTool::LoadToShader() {
 	std::vector<Tri_Mesh::Point> vertices;
@@ -891,32 +889,39 @@ void ARAPTool::LoadToShader() {
 	glBindVertexArray(0);
 }
 
-void ARAPTool::Render()
+void ARAPTool::Render(Shader shader)
 {
 	if (mesh != NULL)
 	{
-		// mesh->Render_SolidWireframe();
+		xScale = 482;
+		yScale = 604;
 
+		glm::mat4 modelMat = glm::mat4(1.0);
+		// modelMat = glm::translate(modelMat, glm::vec3(0.5, -1, 0));
+		modelMat = glm::scale(modelMat, glm::vec3(1 / xScale, 1 / yScale, 0));
+
+		// set the model value
+		shader.setUniformMatrix4fv("model", modelMat);
+
+		// draw mesh with line and triangle
+		mesh->Render(shader);
+		
 		// draw control point
-		glPointSize(8.0);
-		glColor3f(1.0, 0.0, 1.0);
-		glBegin(GL_POINTS);
-		for (OMT::VIter v_it = mesh->vertices_begin(); v_it != mesh->vertices_end(); ++v_it)
-		{
-			int id = v_it->idx();
-
-			if (flags[id] > 0)
+		if (false) {
+			glPointSize(8.0);
+			for (OMT::VIter v_it = mesh->vertices_begin(); v_it != mesh->vertices_end(); ++v_it)
 			{
-				//OMT::Point point = mesh->point(*v_it);
-				Tri_Mesh::Point  p = mesh->point(*v_it);
-				//glVertex3dv(point.data());
-				//glVertex3dv();
-				glVertex3f(p[0], p[1], 0);
-				//std::cout << p[0] << " "<< p[1] <<" " << p[2] << std::endl;
+				int id = v_it->idx();
 
+				if (flags[id] > 0)
+				{
+					Tri_Mesh::Point  p = mesh->point(*v_it);
+
+					glVertex3f(p[0], p[1], 0);
+				}
 			}
 		}
-		glEnd();
+		
 	}
 }
 
