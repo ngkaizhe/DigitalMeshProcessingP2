@@ -487,25 +487,6 @@ void Tri_Mesh::Render_SolidWireframe(Shader shader)
 	glBindVertexArray(face_vao);
 
 	glDrawElements(GL_TRIANGLES, n_faces() * 3, GL_UNSIGNED_INT, 0);
-
-	// opengl 1.0
-	if (false) {
-		glDisable(GL_LIGHTING);
-		glPushAttrib(GL_LIGHTING_BIT);
-		glEnable(GL_POLYGON_OFFSET_FILL);
-		glEnable(GL_DEPTH_TEST);
-		glPolygonOffset(2.0, 2.0);
-		glBegin(GL_TRIANGLES);
-		glColor4f(1.0, 0.96, 0.49, 1.0);
-		for (f_it = faces_begin(); f_it != faces_end(); ++f_it)
-		{
-			for (fv_it = fv_iter(*f_it); fv_it.is_valid(); ++fv_it)
-			{
-				glVertex3f(point(*fv_it)[0], point(*fv_it)[1], point(*fv_it)[2]);
-			}
-		}
-		glEnd();
-	}
 	
 	// render the line
 	// shader
@@ -513,29 +494,6 @@ void Tri_Mesh::Render_SolidWireframe(Shader shader)
 	glBindVertexArray(line_vao);
 
 	glDrawElements(GL_LINES, n_edges() * 2, GL_UNSIGNED_INT, 0);
-
-	// opengl 1.0
-	if (false) {
-		glPushAttrib(GL_LIGHTING_BIT);
-		glDisable(GL_LIGHTING);
-		glLineWidth(1.0);
-		glColor3f(1.0, 0.0, 0.0);
-		glBegin(GL_LINES);
-		for (OMT::EIter e_it = edges_begin(); e_it != edges_end(); ++e_it)
-		{
-			OMT::HEHandle _hedge = halfedge_handle(*e_it, 1);
-
-			OMT::Point curVertex = point(from_vertex_handle(_hedge));
-
-			glVertex3f(curVertex[0], curVertex[1], curVertex[2]);
-
-			curVertex = point(to_vertex_handle(_hedge));
-			glVertex3f(curVertex[0], curVertex[1], curVertex[2]);
-		}
-
-		glEnd();
-		glPopAttrib();
-	}
 	
 	glBindVertexArray(0);
 }
