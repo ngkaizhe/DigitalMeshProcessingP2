@@ -895,16 +895,7 @@ void ARAPTool::Render()
 {
 	if (mesh != NULL)
 	{
-		//std::cout << "n_faces : " << mesh->n_faces() * 3 << "\n";
-		/*glBindVertexArray(vao);
-		glDrawElements(GL_TRIANGLES, mesh->n_faces() * 3, GL_UNSIGNED_INT, 0);
-		glBindVertexArray(0);*/
-		float scale = 500.0f;
-		float offsetX = 0.5f;
-		float offsetY = 0.3f;
-
-		//std::cout << "Render !\n";
-		mesh->Render_SolidWireframe();
+		// mesh->Render_SolidWireframe();
 
 		// draw control point
 		glPointSize(8.0);
@@ -920,7 +911,7 @@ void ARAPTool::Render()
 				Tri_Mesh::Point  p = mesh->point(*v_it);
 				//glVertex3dv(point.data());
 				//glVertex3dv();
-				glVertex3f(p[0] / scale - offsetX, p[1] / scale - offsetY, 0);
+				glVertex3f(p[0], p[1], 0);
 				//std::cout << p[0] << " "<< p[1] <<" " << p[2] << std::endl;
 
 			}

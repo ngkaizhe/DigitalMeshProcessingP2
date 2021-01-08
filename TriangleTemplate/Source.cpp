@@ -12,9 +12,7 @@
 using namespace glm;
 using namespace std;
 
-
 float			aspect;
-ViewManager		m_camera;
 
 Shader shader;
 
@@ -99,30 +97,6 @@ void My_Init()
 	glDepthFunc(GL_LEQUAL);
 
 	shader = Shader("../Assets/shaders/vertex.vs.glsl", "../Assets/shaders/fragment.fs.glsl");
-
-	/*float vertices[] = {
-	-0.5f, -0.5f, 0.0f,
-	 0.5f, -0.5f, 0.0f,
-	 0.0f,  0.5f, 0.0f
-	};
-`
-	unsigned int VBO;
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-
-	glBindVertexArray(VAO);
-	// 2. copy our vertices array in a buffer for OpenGL to use
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-	glBufferData(GL_ARRAY_BUFFER, sizeof(m->), vertices, GL_STATIC_DRAW);
-	//glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-	// 3. then set our vertex attributes pointers
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
-	*/
 }
 
 void LoadImg(string path) {
@@ -199,23 +173,7 @@ void My_Display()
 	glClearColor(0.5f, 0.5f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	//Update shaders' input variable
-	///////////////////////////	
-	/*shader.use();
-	
-	// set view matrix
-	shader.setUniformMatrix4fv("view", m_camera.GetViewMatrix() * m_camera.GetModelMatrix());
-	// set projection matrix
-	shader.setUniformMatrix4fv("projection", m_camera.GetProjectionMatrix(aspect));
-
-	// do something here
-	// set model matrix
-	shader.setUniformMatrix4fv("model", mat4(0.01));*/
-
 	Arap->Render();
-	//glBindVertexArray(VAO);
-	//glDrawArrays(GL_TRIANGLES, 0, 3);
-	//glUseProgram(0);
 
 /*	if (Current_Display.triangulation)
 	{
@@ -231,7 +189,6 @@ void My_Display()
 void My_Reshape(int width, int height)
 {
 	aspect = width * 1.0f / height;
-	m_camera.SetWindowSize(width, height);
 	glViewport(0, 0, width, height);
 
 	// Send the new window size to AntTweakBar
@@ -274,6 +231,7 @@ void My_Mouse(int button, int state, int x, int y)
 			Arap->OnMouse(x - offsetX, y - offsetY, CtrlOP::Remove);
 			printf("Mouse %d is pressed\n", button);
 		}
+
 		printf("%d %d %d %d\n", button, state, x, y);
 	}
 }
@@ -283,7 +241,6 @@ void My_Keyboard(unsigned char key, int x, int y)
 {
 	if (!TwEventKeyboardGLUT(key, x, y))
 	{
-		m_camera.keyEvents(key);
 		printf("Key %c is pressed at (%d, %d)\n", key, x, y);
 	}
 }
@@ -311,7 +268,6 @@ void My_SpecialKeys(int key, int x, int y)
 
 void My_Mouse_Moving(int x, int y) {
 	if (!TwEventMouseMotionGLUT(x, y)) {
-		m_camera.mouseMoveEvent(x, y);
 		if (flag != -1)
 		{
 			Arap->OnMotion(x- offsetX, y- offsetY, flag);//0.008s
