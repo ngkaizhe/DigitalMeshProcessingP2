@@ -3,7 +3,7 @@
 #include"Shader.h"
 #include <AntTweakBar.h>
 #include"ViewManager.h"
-
+#include "Animation.h"
 #include "ARAPTool.h"
 #include "vavImage.h"
 #include "TriangulationCgal.h"
@@ -37,6 +37,9 @@ int bottomBoundary;
 vavImage* ImageEdge = NULL;	   //find contour
 TriangulationCgal* Triangulate = NULL;	   //Delaunay triangulation	
 
+
+//Anim tool
+Animation* anim = NULL;
 // rigid tool
 ARAPTool* Arap = NULL;
 // the mesh we used
@@ -117,6 +120,16 @@ void My_Init()
 	glDepthFunc(GL_LEQUAL);
 
 	shader = Shader("../Assets/shaders/vertex.vs.glsl", "../Assets/shaders/fragment.fs.glsl");
+
+	int hpos = 600;
+	int btn_w = 25;
+	int btn_h = 25;
+	// init animation tool
+	TimeLine* timeline = new TimeLine(glm::vec2(300, hpos), 300, 100, 1.0);
+	Button* record_btn = new Button(glm::vec2(400, hpos), btn_w, btn_h, btnType::Record);
+	Button* start_btn = new Button(glm::vec2(450, hpos), btn_w, btn_h, btnType::Start);
+	Button* stop_btn = new Button(glm::vec2(500, hpos), btn_w, btn_h, btnType::Stop);
+	anim = new Animation(timeline, record_btn, start_btn, stop_btn);
 }
 
 void LoadImg(string path) {
@@ -224,6 +237,7 @@ void My_Display()
 		Arap->Render();
 	}*/
 	// draw gui
+	anim->Render();
 	TwDraw();
 	///////////////////////////	
 	glutSwapBuffers();
@@ -257,8 +271,10 @@ void My_Mouse(int button, int state, int x, int y)
 		{
 			if (state == GLUT_DOWN)
 			{
+
 				MouseX = x;
 				MouseY = y;
+
 				flag = Arap->GetVertex(pixelSpaceValue.x, pixelSpaceValue.y);						 //get control point ID
 
 				printf("Mouse %d is pressed at (%d, %d)\n", button, x, y);
@@ -267,13 +283,18 @@ void My_Mouse(int button, int state, int x, int y)
 			{
 				if (x == MouseX && MouseY == y)
 					Arap->OnMouse(pixelSpaceValue.x, pixelSpaceValue.y, CtrlOP::Add);
+
+				flag = -1;
 				printf("Mouse %d is released at (%d, %d)\n", button, x, y);
 			}
 		}
 		else if (button == GLUT_RIGHT_BUTTON)
 		{
-			Arap->OnMouse(pixelSpaceValue.x, pixelSpaceValue.y, CtrlOP::Remove);
-			printf("Mouse %d is pressed\n", button);
+			if (state == GLUT_UP)
+			{
+				Arap->OnMouse(pixelSpaceValue.x, pixelSpaceValue.y, CtrlOP::Remove);
+				printf("Mouse %d is pressed\n", button);
+			}
 		}
 		
 	}
