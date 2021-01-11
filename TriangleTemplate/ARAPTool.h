@@ -7,6 +7,7 @@
 #include <vector>
 
 extern float imageScale;
+extern glm::mat4 pixelToClip;
 
 enum CtrlOP
 {

@@ -25,14 +25,11 @@ int ScreenWidth = 600;
 int pictureHeight;
 int pictureWidth;
 
-// image scale
-float imageScale = 2;
+// pixel space to clip space
+glm::mat4 pixelToClip;
 
-// boundary
-int leftBoundary;
-int topBoundary;
-int rightBottomBoundary;
-int bottomBoundary;
+// image scale
+float imageScale = 0.5;
 
 vavImage* ImageEdge = NULL;	   //find contour
 TriangulationCgal* Triangulate = NULL;	   //Delaunay triangulation	
@@ -143,13 +140,6 @@ void LoadImg(string path) {
 
 	pictureHeight = ImageEdge->GetWidth();
 	pictureWidth = ImageEdge->GetHeight();
-
-	// calculate the left top boundary and right bottom boundary of image in screen space
-	leftBoundary = pictureWidth / 2 * ((2 - imageScale) / 2);
-	rightBottomBoundary = pictureWidth - (pictureWidth / 2 * ((2 - imageScale) / 2));
-
-	topBoundary = pictureHeight / 2 * ((2 - imageScale) / 2);
-	bottomBoundary = pictureHeight - (pictureHeight / 2 * ((2 - imageScale) / 2));
 }
 
 void Triangulation() {//CGAL Delaunay Triangulation
@@ -215,13 +205,24 @@ void Triangulation() {//CGAL Delaunay Triangulation
 }
 
 glm::vec2 CalculateScreenSpaceToPixelSpace(glm::vec2 ScreenSpaceValue) {
-	ScreenSpaceValue.x -= leftBoundary;
-	ScreenSpaceValue.y -= topBoundary;
+	// set to homogenous vector
+	glm::vec4 homogenous_vec4 = glm::vec4(ScreenSpaceValue.x, ScreenSpaceValue.y, 0, 1);
 
-	ScreenSpaceValue.x = ScreenSpaceValue.x / ScreenWidth * pictureWidth;
-	ScreenSpaceValue.y = ScreenSpaceValue.y / ScreenHeight * pictureHeight;
+	// move the screen space to clip space which
+	// x in range [-1, 1]
+	// y in range [-1, 1]
+	glm::mat4 toClipSpaceMat = glm::mat4(1.0);
+	// normalize the flip y axis
+	toClipSpaceMat = glm::scale(toClipSpaceMat, glm::vec3(1.0 / ScreenWidth * 2, -1.0 / ScreenHeight * 2, 1));
+	// move to middle
+	toClipSpaceMat = glm::translate(toClipSpaceMat, glm::vec3(-ScreenWidth / 2.0, -ScreenHeight / 2.0, 0));
+	homogenous_vec4 = toClipSpaceMat * homogenous_vec4;
 
-	return ScreenSpaceValue;
+	// move the clip space to pixel space
+	glm::mat4 inverseMat = glm::inverse(pixelToClip);
+	homogenous_vec4 = inverseMat * homogenous_vec4;
+
+	return glm::vec2(homogenous_vec4.x, homogenous_vec4.y);
 }
 
 // GLUT callback. Called to draw the scene.
@@ -247,6 +248,9 @@ void My_Display()
 //Call to resize the window
 void My_Reshape(int width, int height)
 {
+	ScreenWidth = width;
+	ScreenHeight = height;
+
 	aspect = width * 1.0f / height;
 
 	glViewport(0, 0, width, height);
@@ -279,7 +283,7 @@ void My_Mouse(int button, int state, int x, int y)
 				return;
 			}
 		}
-			glm::vec2 pixelSpaceValue = CalculateScreenSpaceToPixelSpace(glm::vec2(x, y));
+		glm::vec2 pixelSpaceValue = CalculateScreenSpaceToPixelSpace(glm::vec2(x, y));
 
 		if (button == GLUT_LEFT_BUTTON)
 		{
@@ -344,7 +348,9 @@ void My_SpecialKeys(int key, int x, int y)
 
 void My_Mouse_Moving(int x, int y) {
 	if (!TwEventMouseMotionGLUT(x, y)) {
+		return;
 		glm::vec2 pixelSpaceValue = CalculateScreenSpaceToPixelSpace(glm::vec2(x, y));
+		
 
 		if (flag != -1)
 		{

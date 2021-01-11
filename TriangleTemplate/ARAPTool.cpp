@@ -866,14 +866,14 @@ void ARAPTool::Render(Shader shader)
 	{
 		ReBind();
 
-		glm::mat4 modelMat = glm::mat4(1.0);
+		pixelToClip = glm::mat4(1.0);
 		// normalize the flip y axis
-		modelMat = glm::scale(modelMat, glm::vec3(1 / xScale * imageScale, -1 / yScale * imageScale, 1));
+		pixelToClip = glm::scale(pixelToClip, glm::vec3(1 / xScale * 2 * imageScale, -1 / yScale * 2 * imageScale, 1));
 		// move to middle
-		modelMat = glm::translate(modelMat, glm::vec3(-xScale / 2.0, -yScale / 2.0, 0));
+		pixelToClip = glm::translate(pixelToClip, glm::vec3(-xScale / 2.0, -yScale / 2.0, 0));
 
 		// set the model matrix value
-		shader.setUniformMatrix4fv("model", modelMat);
+		shader.setUniformMatrix4fv("model", pixelToClip);
 
 		// draw mesh with line and triangle
 		mesh->Render(shader);
