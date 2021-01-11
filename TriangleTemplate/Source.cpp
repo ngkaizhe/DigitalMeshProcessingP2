@@ -268,14 +268,14 @@ void My_Mouse(int button, int state, int x, int y)
 	if (!TwEventMouseButtonGLUT(button, state, x, y)) {
 		int f = anim->Click(state, x, y);
 		if (f > 0) {
-			switch(f){
+			switch (f) {
 			case 1:		//click record btn
-
 				break;
 			case 2:		//click start btn
 				break;
-			case 3:		//click stop btn
+			case 3:		//click record btn
 				break;
+			}
 			return;
 		}
 			glm::vec2 pixelSpaceValue = CalculateScreenSpaceToPixelSpace(glm::vec2(x, y));
