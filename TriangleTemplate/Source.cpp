@@ -274,7 +274,6 @@ void My_Mouse(int button, int state, int x, int y)
 		if (f > 0) {
 			switch (f) {
 			case 1:		//click record btn
-
 				break;
 			case 2:		//click start btn
 				break;
