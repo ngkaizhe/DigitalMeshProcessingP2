@@ -3,6 +3,7 @@
 #include "Shader.h"
 #include "ARAPTool.h"
 #include <vector>
+#include <map>
 
 using namespace std;
 
@@ -11,6 +12,7 @@ extern int ScreenWidth;
 extern int ScreenHeight;
 
 enum btnType{ RECORD, START, STOP, TIMELINE};
+enum AnimState {NONE, RECORDING, PLAYING};
 
 class Button {
 
@@ -48,10 +50,9 @@ public:
 class AnimControlPoint {
 public:
 	AnimControlPoint();
-	AnimControlPoint(glm::vec2 p, vector<glm::vec2>cps);
+	AnimControlPoint(vector<CtrlPoint> cps);
 
-	glm::vec2 ui_pos;
-	vector<glm::vec2> mesh_cps;
+	vector<CtrlPoint> keyPoints;
 };
 
 
@@ -63,17 +64,25 @@ public:
 	TimeLine(glm::vec2 c, float w, float h, float sp);
 
 	void SetKeyTime();
+	void BindKey();
+	void CheckIndex();
+
 	bool Click(int x, int y);
-	void AddControlPoint(AnimControlPoint cp);
-	void Render(Shader shader);
+	void SetKeyFrame(vector<CtrlPoint> cps);
+
+	void Render(Shader shader, ARAPTool* a);
 	void Play(bool f);
 	void SetSpeed(float sp);
 private:
 	GLuint line_vao;
-	vector<AnimControlPoint> cps;
-	float linePos;
+	GLuint key_vao;
+
+	map<float, AnimControlPoint*> keyframes;
+	vector<float> framesIndex;
+	float key_time;
 	float speed;
 	bool isplay = false;
+	int key_index = 0;
 };
 
 class Animation
@@ -82,12 +91,16 @@ public:
 	Animation();
 	Animation(TimeLine* tl, Button* rec, Button* star, Button* stop);
 
-	void Render(Shader shader);
+	void Render(Shader shader, ARAPTool* a);
 	int Click(int state, int x, int y);
-	void SetKeyFrame(std::vector<CtrlPoint> );
+	void SetKeyFrame(vector<CtrlPoint> cps);
 
 	TimeLine* timeLine;
 	Button* record_btn;
 	Button* start_btn;
 	Button* stop_btn;
+
+	AnimState animState = AnimState::NONE;
+	std::vector<CtrlPoint> lastCPs;
 };
+
