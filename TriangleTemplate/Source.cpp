@@ -121,14 +121,15 @@ void My_Init()
 
 	shader = Shader("../Assets/shaders/vertex.vs.glsl", "../Assets/shaders/fragment.fs.glsl");
 
-	int hpos = 600;
-	int btn_w = 25;
-	int btn_h = 25;
+	int hpos = 100;
+	int btn_hPos = 180;
+	int btn_w = 10;
+	int btn_h = 10;
 	// init animation tool
 	TimeLine* timeline = new TimeLine(glm::vec2(300, hpos), 300, 100, 1.0);
-	Button* record_btn = new Button(glm::vec2(400, hpos), btn_w, btn_h, btnType::Record);
-	Button* start_btn = new Button(glm::vec2(450, hpos), btn_w, btn_h, btnType::Start);
-	Button* stop_btn = new Button(glm::vec2(500, hpos), btn_w, btn_h, btnType::Stop);
+	Button* record_btn = new Button(glm::vec2(500, btn_hPos), btn_w, btn_h, btnType::RECORD);
+	Button* start_btn = new Button(glm::vec2(530, btn_hPos), btn_w, btn_h, btnType::START);
+	Button* stop_btn = new Button(glm::vec2(560, btn_hPos), btn_w, btn_h, btnType::STOP);
 	anim = new Animation(timeline, record_btn, start_btn, stop_btn);
 }
 
@@ -209,8 +210,8 @@ void Triangulation() {//CGAL Delaunay Triangulation
 			std::cout << "Success to save test.obj" << std::endl;
 		else
 			std::cout << "Failed to save test.obj" << std::endl;
-
 	}
+
 }
 
 glm::vec2 CalculateScreenSpaceToPixelSpace(glm::vec2 ScreenSpaceValue) {
@@ -237,7 +238,7 @@ void My_Display()
 		Arap->Render();
 	}*/
 	// draw gui
-	anim->Render();
+	anim->Render(shader);
 	TwDraw();
 	///////////////////////////	
 	glutSwapBuffers();
@@ -265,13 +266,24 @@ void My_Timer(int val)
 void My_Mouse(int button, int state, int x, int y)
 {
 	if (!TwEventMouseButtonGLUT(button, state, x, y)) {
-		glm::vec2 pixelSpaceValue = CalculateScreenSpaceToPixelSpace(glm::vec2(x, y));
+		int f = anim->Click(state, x, y);
+		if (f > 0) {
+			switch(f){
+			case 1:		//click record btn
+
+				break;
+			case 2:		//click start btn
+				break;
+			case 3:		//click stop btn
+				break;
+			return;
+		}
+			glm::vec2 pixelSpaceValue = CalculateScreenSpaceToPixelSpace(glm::vec2(x, y));
 
 		if (button == GLUT_LEFT_BUTTON)
 		{
 			if (state == GLUT_DOWN)
 			{
-
 				MouseX = x;
 				MouseY = y;
 

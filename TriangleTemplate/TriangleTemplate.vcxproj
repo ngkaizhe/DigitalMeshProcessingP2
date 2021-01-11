@@ -80,7 +80,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>$(SolutionDir)Includes;$(SolutionDir)Includes/opencv2;$(SolutionDir)Includes/Eigen;$(SolutionDir)Includes/CGAL/include;$(SolutionDir)Includes/CGAL/auxiliary/gmp/include;C:\Users\Liu\Documents\DigitalMeshProcessingP2\Includes\mpfr-3.1.0\include;C:\Users\Liu\Documents\DigitalMeshProcessingP2\Includes\mpir-2.5.1\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)Libs;$(SolutionDir)Libs/opencv;$(SolutionDir)Libs/CGAL;$(SolutionDir)Libs/boost;C:\Users\Liu\Documents\DigitalMeshProcessingP2\Includes\mpfr-3.1.0\lib;C:\Users\Liu\Documents\DigitalMeshProcessingP2\Includes\mpir-2.5.1\lib;$(LibraryPath)</LibraryPath>
+    <LibraryPath>(SolutionDir)DLLs;$(SolutionDir)Libs;$(SolutionDir)Libs/opencv;$(SolutionDir)Libs/CGAL;$(SolutionDir)Libs/boost;C:\Users\Liu\Documents\DigitalMeshProcessingP2\Includes\mpfr-3.1.0\lib;C:\Users\Liu\Documents\DigitalMeshProcessingP2\Includes\mpir-2.5.1\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
