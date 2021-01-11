@@ -243,7 +243,7 @@ void My_Display()
 		Arap->Render();
 	}*/
 	// draw gui
-	anim->Render(normalShader);
+	anim->Render(normalShader, Arap);
 	TwDraw();
 	///////////////////////////	
 	glutSwapBuffers();
@@ -283,8 +283,8 @@ void My_Mouse(int button, int state, int x, int y)
 				break;
 			case 3:		//click stop btn
 				break;
-				return;
 			}
+			return;
 		}
 		glm::vec2 pixelSpaceValue = CalculateScreenSpaceToPixelSpace(glm::vec2(x, y));
 
@@ -301,7 +301,7 @@ void My_Mouse(int button, int state, int x, int y)
 			}
 			else if (state == GLUT_UP)
 			{
-				if (x == MouseX && MouseY == y)
+				if (x == MouseX && MouseY == y && anim->animState == AnimState::NONE)
 					Arap->OnMouse(pixelSpaceValue.x, pixelSpaceValue.y, CtrlOP::Add);
 
 				flag = -1;
@@ -310,7 +310,7 @@ void My_Mouse(int button, int state, int x, int y)
 		}
 		else if (button == GLUT_RIGHT_BUTTON)
 		{
-			if (state == GLUT_UP)
+			if (state == GLUT_UP && anim->animState == AnimState::NONE)
 			{
 				Arap->OnMouse(pixelSpaceValue.x, pixelSpaceValue.y, CtrlOP::Remove);
 				printf("Mouse %d is pressed\n", button);
@@ -353,10 +353,13 @@ void My_Mouse_Moving(int x, int y) {
 	if (!TwEventMouseMotionGLUT(x, y)) {
 		glm::vec2 pixelSpaceValue = CalculateScreenSpaceToPixelSpace(glm::vec2(x, y));
 		
-
 		if (flag != -1)
 		{
 			Arap->OnMotion(pixelSpaceValue.x, pixelSpaceValue.y, flag);//0.008s
+			if (anim->animState == AnimState::RECORDING) {
+				anim->SetKeyFrame(Arap->GetCtrlPoint());
+				//anim->SetKeyFrame(pixelSpaceValue.x, pixelSpaceValue.y, flag);
+			}
 		}
 	}
 }
