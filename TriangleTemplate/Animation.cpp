@@ -2,9 +2,6 @@
 #include <iostream>
 using namespace std;
 
-float scrWidth = 600;
-float scrHeight = 800;
-
 Animation::Animation() {
 
 }
@@ -79,8 +76,8 @@ Button::Button(glm::vec2 c, float w, float h, btnType t) {
 }
 
 void Button::InitVAOandVBO() {
-	float screenWidth = scrWidth / 2.0;
-	float screenHeight = scrHeight / 2.0;
+	float screenWidth = ScreenWidth / 2.0;
+	float screenHeight = ScreenHeight / 2.0;
 
 	GLfloat quadVertices[] = {   // Vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
 // Positions   // TexCoords
@@ -124,7 +121,7 @@ bool Button::Collider(int x, int y) {
 		btnN = "timeLine";
 		break;
 	}
-	y = scrHeight - y;
+	y = ScreenHeight - y;
 
 	if (x <= center.x + width && x >= center.x - width && y <= center.y + height && y >= center.y - height) {
 		return true;
@@ -225,8 +222,8 @@ TimeLine::TimeLine(glm::vec2 c, float w, float h, float sp = 5.0) {
 }
 
 void TimeLine::SetKeyTime() {
-	float screenWidth = scrWidth / 2.0;
-	float screenHeight = scrHeight / 2.0;
+	float screenWidth = ScreenWidth / 2.0;
+	float screenHeight = ScreenHeight / 2.0;
 
 	// rebind line_vao starts
 	// vao
@@ -286,8 +283,8 @@ void TimeLine::Render(Shader shader) {
 	if (isplay) {
 	//	cout << "isplaying \n";
 		linePos += speed;
-		if (linePos >= scrWidth)
-			linePos -= scrWidth;
+		if (linePos >= ScreenWidth)
+			linePos -= ScreenWidth;
 	}
 
 	glm::mat4 modelMat = glm::mat4(1.0);

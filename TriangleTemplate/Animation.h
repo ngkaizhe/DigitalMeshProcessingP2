@@ -7,6 +7,8 @@
 using namespace std;
 
 extern float imageScale;
+extern int ScreenWidth;
+extern int ScreenHeight;
 
 enum btnType{ RECORD, START, STOP, TIMELINE};
 
