@@ -203,6 +203,7 @@ void Triangulation() {//CGAL Delaunay Triangulation
 			std::cout << "Success to save test.obj" << std::endl;
 		else
 			std::cout << "Failed to save test.obj" << std::endl;
+
 	}
 
 }

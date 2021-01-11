@@ -24,17 +24,11 @@ ARAPTool::ARAPTool(Tri_Mesh* mesh2D, int pictureHeight, int pictureWidth)
 	}
 
 	uvs.reserve(mesh->n_vertices());
-	std::cout << "\n==============================\n";
-	std::cout << "Starts printing the uv information\n";
 	for (OMT::VIter v_it = mesh->vertices_begin(); v_it != mesh->vertices_end(); ++v_it)
 	{
 		OMT::Point p = mesh->point(*v_it);
 		uvs.push_back(glm::vec2(p[0] / pictureWidth, 1 - (p[1] / pictureHeight)));
-		std::cout << "UV id -> " << v_it->idx() << 
-			", UV value X -> " << uvs[uvs.size() - 1].x << ", UV value Y -> " << uvs[uvs.size() - 1].y << '\n';
 	}
-	std::cout << "Ends printing the uv information\n";
-	std::cout << "\n==============================\n";
 
 	preCompG();
 	preCompF();
@@ -60,7 +54,7 @@ ARAPTool::ARAPTool(Tri_Mesh* mesh2D, int pictureHeight, int pictureWidth)
 	unsigned char* data = stbi_load("../Assets/pictures/gingerbread_man_texture.png", &width, &height, &nrChannels, 0);
 	if (data)
 	{
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
 	}
 	else
