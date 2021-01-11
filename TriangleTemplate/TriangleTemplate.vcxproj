@@ -79,7 +79,7 @@
     <LibraryPath>$(SolutionDir)Libs;$(SolutionDir)Libs/opencv;$(SolutionDir)Libs/CGAL;$(SolutionDir)Libs/boost;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(SolutionDir)Includes;$(SolutionDir)Includes/opencv2;$(SolutionDir)Includes/Eigen;$(SolutionDir)Includes/CGAL/include;$(SolutionDir)Includes/CGAL/auxiliary/gmp/include;C:\Users\Liu\Documents\DigitalMeshProcessingP2\Includes\mpfr-3.1.0\include;C:\Users\Liu\Documents\DigitalMeshProcessingP2\Includes\mpir-2.5.1\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)Includes;$(SolutionDir)Includes/opencv2;$(SolutionDir)Includes/Eigen;$(SolutionDir)Includes/CGAL/include;$(SolutionDir)Includes/CGAL/auxiliary/gmp/include;C:\Users\Liu\Documents\DigitalMeshProcessingP2\Includes\mpfr-3.1.0\include;C:\Users\Liu\Documents\DigitalMeshProcessingP2\Includes\mpir-2.5.1\include;$(SolutionDir)Includes/STB;$(IncludePath)</IncludePath>
     <LibraryPath>(SolutionDir)DLLs;$(SolutionDir)Libs;$(SolutionDir)Libs/opencv;$(SolutionDir)Libs/CGAL;$(SolutionDir)Libs/boost;C:\Users\Liu\Documents\DigitalMeshProcessingP2\Includes\mpfr-3.1.0\lib;C:\Users\Liu\Documents\DigitalMeshProcessingP2\Includes\mpir-2.5.1\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -160,6 +160,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Assets\shaders\fragment.fs.glsl" />
+    <None Include="..\Assets\shaders\texture_fragment.fs.glsl" />
+    <None Include="..\Assets\shaders\texture_vertex.vs.glsl" />
     <None Include="..\Assets\shaders\vertex.vs.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -232,12 +232,12 @@ public:
 	std::vector<OMT::VHandle>                  Extrme_Pt;
 
 	// load the mesh vertices and face to shader
-	void ReBind();
+	void ReBind(std::vector<glm::vec2> uvs);
 	// render everything
-	void Render(Shader shader);
+	void Render(Shader shader, Shader textureShader, int xScale, int yScale, unsigned int texture, std::vector<glm::vec2> uvs);
 
 	// used
-	void Render_SolidWireframe(Shader shader);
+	void Render_SolidWireframe(Shader shader, Shader textureShader, unsigned int texture);
 
 private:
 	GLuint face_vao;
@@ -254,6 +254,11 @@ private:
 bool ReadFile(std::string _fileName, Tri_Mesh* _mesh); //讀取mesh資料
 bool SaveFile(std::string _fileName, Tri_Mesh* _mesh); //儲存mesh資料
 /*初始化view port設定函式*/
+
+struct MyVertex {
+	glm::vec3 my_vertex;
+	glm::vec2 my_uv;
+};
 
 #endif
 

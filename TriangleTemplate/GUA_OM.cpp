@@ -468,32 +468,37 @@ namespace OMP
 	/*======================================================================*/
 };
 /*======================================================================*/
-void Tri_Mesh::Render(Shader shader) {
-	ReBind();
+void Tri_Mesh::Render(Shader normalShader, Shader textureShader, int xScale, int yScale, unsigned int texture, std::vector<glm::vec2> uvs) {
+	ReBind(uvs);
 
 	// render solid wire frame
-	Render_SolidWireframe(shader);
+	Render_SolidWireframe(normalShader, textureShader, texture);
 }
 
-void Tri_Mesh::Render_SolidWireframe(Shader shader)
+void Tri_Mesh::Render_SolidWireframe(Shader normalShader, Shader textureShader, unsigned int texture)
 {
 	// render the face
 	// shader
-	shader.use();
-	shader.setUniform3fv("color", glm::vec3(1.0, 0.96, 0.49));
+	textureShader.use();
+	textureShader.setUniformInt("texture1", 0);
+	// set the texture value for the texture shader
+	glActiveTexture(GL_TEXTURE0); // activate the texture unit first before binding texture
+	glBindTexture(GL_TEXTURE_2D, texture);
+
 	glBindVertexArray(face_vao);
 	glDrawElements(GL_TRIANGLES, n_faces() * 3, GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
 	
 	// render the line
 	// shader
-	shader.setUniform3fv("color", glm::vec3(1.0, 0, 0));
+	normalShader.use();
+	normalShader.setUniform3fv("color", glm::vec3(1.0, 0, 0));
 	glBindVertexArray(line_vao);
 	glDrawElements(GL_LINES, n_edges() * 2, GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
 }
 
-void Tri_Mesh::ReBind() {
+void Tri_Mesh::ReBind(std::vector<glm::vec2> uvs) {
 
 	// rebind face_vao starts
 	GLuint ebo;
@@ -506,14 +511,20 @@ void Tri_Mesh::ReBind() {
 	// vertices
 	glGenBuffers(1, &vboVertices);
 
-	std::vector<glm::vec3> vertices;
+	// vertices
+	std::vector<MyVertex> vertices;
 	vertices.reserve(n_vertices());
 	for (Tri_Mesh::VertexIter v_it = vertices_begin(); v_it != vertices_end(); ++v_it)
 	{
-		glm::vec3 v1 = glm::vec3(point(*v_it)[0], point(*v_it)[1], point(*v_it)[2]);
+		MyVertex v1;
+		// vertex
+		v1.my_vertex = glm::vec3(point(*v_it)[0], point(*v_it)[1], point(*v_it)[2]);
+		v1.my_uv = uvs[v_it->idx()];
+
 		vertices.push_back(v1);
 	}
 
+	// faces indices
 	std::vector<unsigned int> faces_indices;
 	faces_indices.reserve(n_faces() * 3);
 	for (Tri_Mesh::FaceIter f_it = faces_begin(); f_it != faces_end(); ++f_it)
@@ -525,12 +536,15 @@ void Tri_Mesh::ReBind() {
 	}
 
 	glBindVertexArray(face_vao);
+	glBindBuffer(GL_ARRAY_BUFFER, vboVertices);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(MyVertex) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
 
 	// vertices
-	glBindBuffer(GL_ARRAY_BUFFER, vboVertices);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(MyVertex), (void*)offsetof(MyVertex, my_vertex));
 	glEnableVertexAttribArray(0);
+	// uvs
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(MyVertex), (void*)offsetof(MyVertex, my_uv));
+	glEnableVertexAttribArray(1);
 
 	// faces
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
@@ -548,6 +562,15 @@ void Tri_Mesh::ReBind() {
 	// vertices
 	glGenBuffers(1, &vboVertices);
 
+	// vertices
+	std::vector<glm::vec3> line_vertices;
+	line_vertices.reserve(n_vertices());
+	for (Tri_Mesh::VertexIter v_it = vertices_begin(); v_it != vertices_end(); ++v_it)
+	{
+		glm::vec3 v1 = glm::vec3(point(*v_it)[0], point(*v_it)[1], point(*v_it)[2]);
+		line_vertices.push_back(v1);
+	}
+
 	std::vector<unsigned int> line_indices;
 	line_indices.reserve(n_edges() * 2);
 	for (Tri_Mesh::EdgeIter e_it = edges_begin(); e_it != edges_end(); ++e_it)
@@ -561,7 +584,7 @@ void Tri_Mesh::ReBind() {
 
 	// vertices
 	glBindBuffer(GL_ARRAY_BUFFER, vboVertices);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * line_vertices.size(), &line_vertices[0], GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(0);
 

@@ -31,7 +31,7 @@ public:
 	Tri_Mesh* GetMesh();
 
 	void ReBind();
-	void Render(Shader shader);
+	void Render(Shader normalShader, Shader textureShader);
 	void OnMotion(int x, int y, int ctrl_index);
 	void OnMouse(int x, int y, CtrlOP op);
 	void SetCtrlPoints(std::vector<CtrlPoint> pointsToSet);
@@ -76,5 +76,11 @@ private:
 
 	// the total ctrl point we have
 	int totalCtrlPoint;
+
+	// texture
+	unsigned int texture;
+
+	// uv
+	std::vector<glm::vec2> uvs;
 };
 

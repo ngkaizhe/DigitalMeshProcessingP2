@@ -14,7 +14,9 @@ using namespace glm;
 using namespace std;
 
 float			aspect;
-Shader shader;
+Shader normalShader;
+Shader textureShader;
+
 unsigned int VAO;
 
 // screen size
@@ -116,7 +118,8 @@ void My_Init()
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
 
-	shader = Shader("../Assets/shaders/vertex.vs.glsl", "../Assets/shaders/fragment.fs.glsl");
+	normalShader = Shader("../Assets/shaders/vertex.vs.glsl", "../Assets/shaders/fragment.fs.glsl");
+	textureShader = Shader("../Assets/shaders/texture_vertex.vs.glsl", "../Assets/shaders/texture_fragment.fs.glsl");
 
 	int hpos = 100;
 	int btn_hPos = 180;
@@ -232,14 +235,14 @@ void My_Display()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
-	Arap->Render(shader);
+	Arap->Render(normalShader, textureShader);
 
 /*	if (Current_Display.triangulation)
 	{
 		Arap->Render();
 	}*/
 	// draw gui
-	anim->Render(shader);
+	anim->Render(normalShader);
 	TwDraw();
 	///////////////////////////	
 	glutSwapBuffers();
@@ -347,7 +350,6 @@ void My_SpecialKeys(int key, int x, int y)
 
 void My_Mouse_Moving(int x, int y) {
 	if (!TwEventMouseMotionGLUT(x, y)) {
-		return;
 		glm::vec2 pixelSpaceValue = CalculateScreenSpaceToPixelSpace(glm::vec2(x, y));
 		
 

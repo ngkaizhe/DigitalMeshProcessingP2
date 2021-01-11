@@ -79,5 +79,11 @@
     <None Include="..\Assets\shaders\vertex.vs.glsl">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="..\Assets\shaders\texture_fragment.fs.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\Assets\shaders\texture_vertex.vs.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

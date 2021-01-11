@@ -4,6 +4,9 @@
 #include <iomanip>
 #include <string>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include"stb_image.h"
+
 ARAPTool::ARAPTool(Tri_Mesh* mesh2D, int pictureHeight, int pictureWidth)
 {
 	mesh = mesh2D;
@@ -20,6 +23,19 @@ ARAPTool::ARAPTool(Tri_Mesh* mesh2D, int pictureHeight, int pictureWidth)
 		baseVertices.push_back(OMT::Vec2d(p[0], p[1]));
 	}
 
+	uvs.reserve(mesh->n_vertices());
+	std::cout << "\n==============================\n";
+	std::cout << "Starts printing the uv information\n";
+	for (OMT::VIter v_it = mesh->vertices_begin(); v_it != mesh->vertices_end(); ++v_it)
+	{
+		OMT::Point p = mesh->point(*v_it);
+		uvs.push_back(glm::vec2(p[0] / pictureWidth, 1 - (p[1] / pictureHeight)));
+		std::cout << "UV id -> " << v_it->idx() << 
+			", UV value X -> " << uvs[uvs.size() - 1].x << ", UV value Y -> " << uvs[uvs.size() - 1].y << '\n';
+	}
+	std::cout << "Ends printing the uv information\n";
+	std::cout << "\n==============================\n";
+
 	preCompG();
 	preCompF();
 	preCompH();
@@ -29,6 +45,30 @@ ARAPTool::ARAPTool(Tri_Mesh* mesh2D, int pictureHeight, int pictureWidth)
 	// init picture size
 	xScale = pictureWidth;
 	yScale = pictureHeight;
+
+	// texture part
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	// set the texture wrapping/filtering options (on the currently bound texture object)
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	// load and generate the texture
+	int width, height, nrChannels;
+	stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
+	unsigned char* data = stbi_load("../Assets/pictures/gingerbread_man_texture.png", &width, &height, &nrChannels, 0);
+	if (data)
+	{
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else
+	{
+		std::cout << "Failed to load texture" << std::endl;
+	}
+	stbi_image_free(data);
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 ARAPTool::~ARAPTool()
@@ -848,7 +888,7 @@ void ARAPTool::ReBind() {
 	glGenVertexArrays(1, &ctrl_point_vao);
 	glGenBuffers(1, &vboVertices);
 
-	// bind the vao
+	// bind the ctrl_vao
 	glBindVertexArray(ctrl_point_vao);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vboVertices);
@@ -860,7 +900,7 @@ void ARAPTool::ReBind() {
 	glBindVertexArray(0);
 }
 
-void ARAPTool::Render(Shader shader)
+void ARAPTool::Render(Shader normalShader, Shader textureShader)
 {
 	if (mesh != NULL)
 	{
@@ -873,15 +913,16 @@ void ARAPTool::Render(Shader shader)
 		pixelToClip = glm::translate(pixelToClip, glm::vec3(-xScale / 2.0, -yScale / 2.0, 0));
 
 		// set the model matrix value
-		shader.setUniformMatrix4fv("model", pixelToClip);
+		normalShader.setUniformMatrix4fv("model", pixelToClip);
+		textureShader.setUniformMatrix4fv("model", pixelToClip);
 
 		// draw mesh with line and triangle
-		mesh->Render(shader);
+		mesh->Render(normalShader, textureShader, xScale, yScale, texture, uvs);
 		
 		// draw control point
 		if (totalCtrlPoint > 0) {
 			glPointSize(8.0);
-			shader.setUniform3fv("color", glm::vec3(0, 0, 1));
+			normalShader.setUniform3fv("color", glm::vec3(0, 0, 1));
 			glBindVertexArray(ctrl_point_vao);
 			glDrawArrays(GL_POINTS, 0, totalCtrlPoint);
 			glBindVertexArray(0);
