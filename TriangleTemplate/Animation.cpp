@@ -68,23 +68,27 @@ int Animation::Click(int state, int x, int y) {
 	if (record_flag) {
 		if (record_btn->clickf) {
 			animState = AnimState::RECORDING;
+			return 1;
 		}
 		else {
 			animState = AnimState::NONE;
+			return 3;
 		}
-		return 1;
 	}else if (start_flag) {
 		if (start_btn->clickf) {
 			animState = AnimState::PLAYING;
 			timeLine->Play(true);
+			return 2;
 		}
 		else {
 			animState = AnimState::NONE;
 			timeLine->Play(false);
+			return 3;
 		}
-		return 2;
 	}else if (stop_flag) {
 		animState = AnimState::NONE;
+		start_btn->clickf = false;
+		record_btn->clickf = false;
 		timeLine->Play(false);
 		return 3;
 	}
@@ -112,8 +116,12 @@ void Animation::SetKeyFrame(vector<CtrlPoint> cps, bool init) {
 void Animation::AnimationParser() {
 	cout << "AnimationParser!\n";
 	string path = "../Assets/AnimationList/";
-	for (int i = 0; i < 2; i++) {
+	for (int i = 0; i < 3; i++) {
 		ifstream fin(path + std::to_string(i) + ".txt");
+		if (!fin) {
+			cout << "Open " << path + std::to_string(i) + ".txt" << " Failed!\n";
+			return;
+		}
 		string str;
 		int keyPointNum;
 		int key_controlpointNum;
@@ -157,11 +165,11 @@ void Animation::AnimationParser() {
 		AnimationData* ad = new AnimationData(frames, indexs);
 		animationList.push_back(ad);
 	}
-	timeLine->SetAnimation(animationList[animIndex]->keyframes, animationList[animIndex]->framesIndex);
+	//timeLine->SetAnimation(animationList[animIndex]->keyframes, animationList[animIndex]->framesIndex);
 }
 
 void Animation::OnAnimationListChange(int index) {
-	if (index > animationList.size()) {
+	if (index > animationList.size() || index < 0) {
 		cout << "Animation Index Out of range!\n";
 		return;
 	}
@@ -169,14 +177,18 @@ void Animation::OnAnimationListChange(int index) {
 	timeLine->SetAnimation(animationList[animIndex]->keyframes, animationList[animIndex]->framesIndex);
 }
 
-vector<glm::vec2> Animation::GetCpsPos() {
+void Animation::SetSpeed(float speed) {
+	timeLine->SetSpeed(speed);
+}
+
+vector<int> Animation::GetCpsPos() {
 	AnimationData* ad = animationList[animIndex];
 	vector<CtrlPoint> cps = ad->keyframes[ad->framesIndex[0]]->keyPoints;
-	vector<glm::vec2> pos;
+	vector<int> idxs;
 	for (int i = 0; i < cps.size(); i++) {
-		pos.push_back(glm::vec2(cps[i].p[0], cps[i].p[1]));
+		idxs.push_back(cps[i].idx);
 	}
-	return pos;
+	return idxs;
 }
 
 Button::Button() {
@@ -473,6 +485,7 @@ void TimeLine::CheckIndex() {
 
 bool TimeLine::Click(int x, int y) {
 	if (Collider(x, y)) {
+	//	cout << "FramesIndex size : " << framesIndex.size() << "\n";
 		key_time = x;
 		return true;
 	}
@@ -480,8 +493,7 @@ bool TimeLine::Click(int x, int y) {
 }
 
 void TimeLine::Play(bool f) {
-	cout << "Play " << f << "\n";
-
+	//cout << "Play " << f << "\n";
 	isplay = f;
 }
 
@@ -550,8 +562,11 @@ void TimeLine::Render(Shader shader, Shader textureShader, ARAPTool* arap) {
 }
 
 void TimeLine::SetKeyFrame(vector<CtrlPoint> cps, bool init = false) {
-	if (init)
+	if (init) {
+		if (framesIndex.size() > 0 && framesIndex[0] == 0)
+			return;
 		key_time = 0;
+	}
 	AnimControlPoint* ap = new AnimControlPoint(cps);
 	keyframes[key_time] = ap;
 

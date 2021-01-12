@@ -468,14 +468,14 @@ namespace OMP
 	/*======================================================================*/
 };
 /*======================================================================*/
-void Tri_Mesh::Render(Shader normalShader, Shader textureShader, int xScale, int yScale, unsigned int texture, std::vector<glm::vec2> uvs) {
+void Tri_Mesh::Render(Shader normalShader, Shader textureShader, int xScale, int yScale, unsigned int texture, std::vector<glm::vec2> uvs, bool showWireframe) {
 	ReBind(uvs);
 
 	// render solid wire frame
-	Render_SolidWireframe(normalShader, textureShader, texture);
+	Render_SolidWireframe(normalShader, textureShader, texture, showWireframe);
 }
 
-void Tri_Mesh::Render_SolidWireframe(Shader normalShader, Shader textureShader, unsigned int texture)
+void Tri_Mesh::Render_SolidWireframe(Shader normalShader, Shader textureShader, unsigned int texture, bool showWireframe)
 {
 	// render the face
 	// shader
@@ -493,11 +493,13 @@ void Tri_Mesh::Render_SolidWireframe(Shader normalShader, Shader textureShader, 
 	
 	// render the line
 	// shader
-	normalShader.use();
-	normalShader.setUniform3fv("color", glm::vec3(1.0, 0, 0));
-	glBindVertexArray(line_vao);
-	glDrawElements(GL_LINES, n_edges() * 2, GL_UNSIGNED_INT, 0);
-	glBindVertexArray(0);
+	if (showWireframe) {
+		normalShader.use();
+		normalShader.setUniform3fv("color", glm::vec3(1.0, 0, 0));
+		glBindVertexArray(line_vao);
+		glDrawElements(GL_LINES, n_edges() * 2, GL_UNSIGNED_INT, 0);
+		glBindVertexArray(0);
+	}
 }
 
 void Tri_Mesh::ReBind(std::vector<glm::vec2> uvs) {

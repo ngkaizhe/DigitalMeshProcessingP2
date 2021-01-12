@@ -58,6 +58,9 @@ struct Mode_Display {
 
 Mode_Display Current_Display;
 
+float anim_speed = 1.0f;
+int showWireframe = 1;
+
 // selection part
 enum PictureSelectionMode
 {
@@ -68,10 +71,12 @@ PictureSelectionMode pictureSelectionMode = Gingerman;
 
 enum AnimationSelectionMode
 {
-	Walk,
-	Jump,
+	None,
+	HandMoveDance,
+	LegMoveDance,
+	SwingHand,
 };
-AnimationSelectionMode animSelectionMode = Walk;
+AnimationSelectionMode animSelectionMode = None;
 
 
 TwEnumVal pictureSelectionModeEV[] = {
@@ -80,8 +85,10 @@ TwEnumVal pictureSelectionModeEV[] = {
 };
 
 TwEnumVal animSelectionModeEV[] = {
-	{Walk, "Walk"},
-	{Jump, "Jump"},
+	{None, "None"},
+	{HandMoveDance, "HandMoveDance"},
+	{LegMoveDance, "LegMoveDance"},
+	{SwingHand, "SwingHand"},
 };
 
 TwType pictureSelectionModeType;
@@ -112,16 +119,20 @@ void SetupGUI() {
 #endif
 	TwGLUTModifiersFunc(glutGetModifiers);
 	TwBar* bar = TwNewBar("Project2");
-	TwDefine(" 'Project2' size='230 90' ");
+	TwDefine(" 'Project2' size='230 100' ");
 	TwDefine(" 'Project2' fontsize='3' color='96 216 224'");
 
 	 //Defining season enum type
 	 pictureSelectionModeType = TwDefineEnum("SelectionModeType", pictureSelectionModeEV, 2);
-	 animSelectionModeType = TwDefineEnum("AnimSelectionModeType", animSelectionModeEV, 2);
+	 animSelectionModeType = TwDefineEnum("AnimSelectionModeType", animSelectionModeEV, 4);
 
 	 //Adding season to bar
 	 TwAddVarRW(bar, "SelectionMode", pictureSelectionModeType, &pictureSelectionMode, NULL);
 	 TwAddVarRW(bar, "Animation List", animSelectionModeType, &animSelectionMode, NULL);
+	 TwAddVarRW(bar, "Speed", TW_TYPE_FLOAT, &anim_speed,
+		 " min=0.5 max=5 step=0.5 keyIncr=z keyDecr=Z help='Animation Speed (10=original size).' ");
+
+	 TwAddVarRW(bar, "ShowWireframe", TW_TYPE_BOOL32, &showWireframe, NULL);
 
 }
 
@@ -142,8 +153,8 @@ void My_Init()
 
 	int hpos = 100;
 	int btn_hPos = 180;
-	int btn_w = 10;
-	int btn_h = 10;
+	int btn_w = 7;
+	int btn_h = 7;
 	// init animation tool
 	TimeLine* timeline = new TimeLine(glm::vec2(300, hpos), 300, 100, 1.0);
 	Button* record_btn = new Button(glm::vec2(520, btn_hPos), btn_w, btn_h, btnType::RECORD);
@@ -154,7 +165,7 @@ void My_Init()
 
 	anim = new Animation(timeline, record_btn, start_btn, stop_btn, save_btn, clear_btn);
 	anim->AnimationParser();
-	Arap->SetControlPoints(anim->GetCpsPos());
+	//Arap->SetControlPoints(anim->GetCpsPos());
 	anim->InitFinish();
 }
 
@@ -262,16 +273,13 @@ void My_Display()
 	glEnable(GL_DEPTH_TEST);
 	if (animIndex != animSelectionMode) {
 		animIndex = animSelectionMode;
-		anim->OnAnimationListChange(animIndex);
+		anim->OnAnimationListChange(animIndex-1);
+		if(animIndex - 1 >= 0)
+			Arap->SetControlPoints(anim->GetCpsPos());
 	}
+	Arap->Render(normalShader, textureShader, showWireframe);
 
-	Arap->Render(normalShader, textureShader);
-
-/*	if (Current_Display.triangulation)
-	{
-		Arap->Render();
-	}*/
-	// draw gui
+	anim->SetSpeed(anim_speed);
 	anim->Render(normalShader, textureShader, Arap);
 	TwDraw();
 	///////////////////////////	

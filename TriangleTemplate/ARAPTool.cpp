@@ -861,11 +861,35 @@ void ARAPTool::OnMouse(int x, int y, CtrlOP op)
 	}
 }
 
-void ARAPTool::SetControlPoints(std::vector<glm::vec2> p) {
+void ARAPTool::SetControlPoints(std::vector<int> idxs) {
 	std::cout << "SetControlPoints ! \n";
 
-	for (int i = 0; i < p.size(); i++) {
-		OnMouse(p[i].x, p[i].y, CtrlOP::Add);
+	for (int i = 0; i < ctrlPoints.size(); i++) {
+		flags[ctrlPoints[i]] = 0;
+		preStep1();
+		preStep2();
+	}
+
+	for (int i = 0; i < idxs.size(); i++) {
+
+		flags[idxs[i]] = 1;
+		preStep1();
+		preStep2();
+
+		ctrlPoints.clear();
+		for (OMT::VIter v_it = mesh->vertices_begin(); v_it != mesh->vertices_end(); ++v_it)
+		{
+			int id = v_it->idx();
+			if (!flags[id])
+			{
+				continue;
+			}
+			ctrlPoints.push_back(id);
+		}
+
+	//	OnMouse(p[i].x, p[i].y, CtrlOP::Remove);
+
+		//OnMouse(p[i].x, p[i].y, CtrlOP::Add);
 	/*	std::cout << idxs[i] << "\n";
 		flags[idxs[i]] = 1;
 		ctrlPoints.push_back(idxs[i]);*/
@@ -907,7 +931,7 @@ void ARAPTool::ReBind() {
 	glBindVertexArray(0);
 }
 
-void ARAPTool::Render(Shader normalShader, Shader textureShader)
+void ARAPTool::Render(Shader normalShader, Shader textureShader, bool showWireframe)
 {
 	if (mesh != NULL)
 	{
@@ -924,7 +948,7 @@ void ARAPTool::Render(Shader normalShader, Shader textureShader)
 		textureShader.setUniformMatrix4fv("model", pixelToClip);
 
 		// draw mesh with line and triangle
-		mesh->Render(normalShader, textureShader, xScale, yScale, texture, uvs);
+		mesh->Render(normalShader, textureShader, xScale, yScale, texture, uvs, showWireframe);
 		
 		// draw control point
 		if (totalCtrlPoint > 0) {

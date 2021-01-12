@@ -118,7 +118,8 @@ public:
 	void SetKeyFrame(vector<CtrlPoint> cps, bool init = false);
 	void AnimationParser();
 	void OnAnimationListChange(int index);
-	vector<glm::vec2> GetCpsPos();
+	void SetSpeed(float speed);
+	vector<int> GetCpsPos();
 
 	TimeLine* timeLine;
 	Button* record_btn;
@@ -127,7 +128,7 @@ public:
 	Button* save_btn;
 	Button* clear_btn;
 
-	int animIndex = 0;
+	int animIndex = -1;
 	vector<AnimationData*> animationList;
 	AnimState animState = AnimState::NONE;
 	std::vector<CtrlPoint> lastCPs;

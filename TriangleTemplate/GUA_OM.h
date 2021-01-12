@@ -234,10 +234,10 @@ public:
 	// load the mesh vertices and face to shader
 	void ReBind(std::vector<glm::vec2> uvs);
 	// render everything
-	void Render(Shader shader, Shader textureShader, int xScale, int yScale, unsigned int texture, std::vector<glm::vec2> uvs);
+	void Render(Shader shader, Shader textureShader, int xScale, int yScale, unsigned int texture, std::vector<glm::vec2> uvs, bool showWireframe = true);
 
 	// used
-	void Render_SolidWireframe(Shader shader, Shader textureShader, unsigned int texture);
+	void Render_SolidWireframe(Shader shader, Shader textureShader, unsigned int texture, bool showWireframe = true);
 
 private:
 	GLuint face_vao;

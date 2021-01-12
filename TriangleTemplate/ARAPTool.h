@@ -30,9 +30,9 @@ public:
 	std::vector<CtrlPoint> GetCtrlPoint();
 	Tri_Mesh* GetMesh();
 
-	void SetControlPoints(std::vector<glm::vec2> p);
+	void SetControlPoints(std::vector<int> idxs);
 	void ReBind();
-	void Render(Shader normalShader, Shader textureShader);
+	void Render(Shader normalShader, Shader textureShader, bool showWireframe);
 	void OnMotion(int x, int y, int ctrl_index);
 	void OnMouse(int x, int y, CtrlOP op);
 	void SetCtrlPoints(std::vector<CtrlPoint> pointsToSet);
