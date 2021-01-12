@@ -4,6 +4,7 @@
 #include <fstream>
 #include <string> 
 #include <io.h>
+#include"stb_image.h"
 
 using namespace std;
 
@@ -36,13 +37,13 @@ void Animation::InitFinish() {
 	clear_btn->InitFinish();
 }
 
-void Animation::Render(Shader shader, ARAPTool* a) {
-	timeLine->Render(shader, a);
-	record_btn->Render(shader);
-	start_btn->Render(shader);
-	stop_btn->Render(shader);
-	save_btn->Render(shader);
-	clear_btn->Render(shader);
+void Animation::Render(Shader noramlShader, Shader textureShader, ARAPTool* a) {
+	timeLine->Render(noramlShader, textureShader, a);
+	record_btn->Render(textureShader);
+	start_btn->Render(textureShader);
+	stop_btn->Render(textureShader);
+	save_btn->Render(textureShader);
+	clear_btn->Render(textureShader);
 }
 
 int Animation::Click(int state, int x, int y) {
@@ -65,12 +66,22 @@ int Animation::Click(int state, int x, int y) {
 		timeLine_flag = timeLine->Click(x, y);
 
 	if (record_flag) {
-		animState = AnimState::RECORDING;
-
+		if (record_btn->clickf) {
+			animState = AnimState::RECORDING;
+		}
+		else {
+			animState = AnimState::NONE;
+		}
 		return 1;
 	}else if (start_flag) {
-		animState = AnimState::PLAYING;
-		timeLine->Play(true);
+		if (start_btn->clickf) {
+			animState = AnimState::PLAYING;
+			timeLine->Play(true);
+		}
+		else {
+			animState = AnimState::NONE;
+			timeLine->Play(false);
+		}
 		return 2;
 	}else if (stop_flag) {
 		animState = AnimState::NONE;
@@ -177,6 +188,8 @@ Button::Button(float w, float h, btnType t) {
 	width = w;
 	height = h;
 	type = t;
+	if (t == btnType::RECORD || t == btnType::START)
+		keep = true;
 }
 
 Button::Button(glm::vec2 c, float w, float h, btnType t) {
@@ -184,6 +197,8 @@ Button::Button(glm::vec2 c, float w, float h, btnType t) {
 	width = w;
 	height = h;
 	type = t;
+	if (t == btnType::RECORD || t == btnType::START)
+		keep = true;
 }
 
 void Button::InitVAOandVBO() {
@@ -213,6 +228,54 @@ void Button::InitVAOandVBO() {
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (GLvoid*)(2 * sizeof(GLfloat)));
 	glBindVertexArray(0);
+
+	// texture part
+	glGenTextures(1, &m_shape.texture);
+	glBindTexture(GL_TEXTURE_2D, m_shape.texture);
+	// set the texture wrapping/filtering options (on the currently bound texture object)
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	// load and generate the texture
+	int width, height, nrChannels;
+	stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
+	//unsigned char* data = stbi_load("../Assets/pictures/gingerbread_man_texture.png", &width, &height, &nrChannels, 0);
+	unsigned char* data = stbi_load("../Assets/pictures/gingerbread_man_texture_3.png", &width, &height, &nrChannels, 0);
+
+	switch (type) {
+	case btnType::TIMELINE:
+		data = stbi_load("../Assets/pictures/timeLine.png", &width, &height, &nrChannels, 0);
+		break;
+	case btnType::RECORD:
+		data = stbi_load("../Assets/pictures/record.png", &width, &height, &nrChannels, 0);
+		break;
+	case btnType::START:
+		data = stbi_load("../Assets/pictures/start.png", &width, &height, &nrChannels, 0);
+		break;
+	case btnType::STOP:
+		data = stbi_load("../Assets/pictures/stop.png", &width, &height, &nrChannels, 0);
+		break;
+	case btnType::SAVE:
+		data = stbi_load("../Assets/pictures/save.png", &width, &height, &nrChannels, 0);
+		break;
+	case btnType::CLEAR:
+		data = stbi_load("../Assets/pictures/clear.png", &width, &height, &nrChannels, 0);
+		break;
+	}
+	//unsigned char* data = stbi_load("../Assets/pictures/gingerbread_man_texture_3.png", &width, &height, &nrChannels, 0);
+
+	if (data)
+	{
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else
+	{
+		std::cout << "Failed to load texture" << std::endl;
+	}
+	stbi_image_free(data);
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void Button::InitFinish() {
@@ -233,13 +296,34 @@ void Button::Render(Shader shader) {
 	if (!initf)
 		return;
 	//ReBind();
+
+	if (clickf) {
+		if (!keep) {
+			cd--;
+			if (cd < 0) {
+				clickf = false;
+				cd = total_cd;
+			}
+		}
+	}
+
+	shader.use();
+	shader.setUniformInt("texture1", 0);
+	// set the texture value for the texture shader
+	glActiveTexture(GL_TEXTURE0); // activate the texture unit first before binding texture
+	glBindTexture(GL_TEXTURE_2D, m_shape.texture);
+
 	glm::mat4 modelMat = glm::mat4(1.0);
 	// set the model matrix value
 	shader.setUniformMatrix4fv("model", modelMat);
+	if(!clickf)
+		shader.setUniform3fv("color", glm::vec3(1.0, 1.0, 1.0));
+	else
+		shader.setUniform3fv("color", glm::vec3(0.5, 0.0, 0.0));
+
 
 	glBindVertexArray(m_shape.vao);
-	shader.use();
-	switch (type) {
+	/*switch (type) {
 	case btnType::RECORD:
 		shader.setUniform3fv("color", glm::vec3(1.0, 0.0, 0.0));
 		break;
@@ -258,7 +342,7 @@ void Button::Render(Shader shader) {
 	case btnType::TIMELINE:
 		shader.setUniform3fv("color", glm::vec3(0.9, 0.9, 0.9));
 		break;
-	}
+	}*/
 	//shader.setUniform3fv("color", glm::vec3(1.0, 0.96, 0.49));
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
@@ -268,23 +352,8 @@ void Button::Render(Shader shader) {
 bool Button::Click(int x, int y) {
 	string btnN = "";
 
-	switch (type) {
-	case btnType::RECORD:
-		btnN = "record";
-		break;
-	case btnType::START:
-		btnN = "start";
-		break;
-	case btnType::STOP:
-		btnN = "stop";
-		break;
-	case btnType::TIMELINE:
-		btnN = "timeLine";
-		break;
-	}
-
 	if (Collider(x, y)) {
-		cout << "btn " << btnN << "\n";
+		clickf = !clickf;
 		return true;
 		//Do click
 	}
@@ -404,7 +473,6 @@ void TimeLine::CheckIndex() {
 
 bool TimeLine::Click(int x, int y) {
 	if (Collider(x, y)) {
-		cout << "Click " << "timeLine" << " button!\n";
 		key_time = x;
 		return true;
 	}
@@ -417,7 +485,7 @@ void TimeLine::Play(bool f) {
 	isplay = f;
 }
 
-void TimeLine::Render(Shader shader, ARAPTool* arap) {
+void TimeLine::Render(Shader shader, Shader textureShader, ARAPTool* arap) {
 	if (!initf)
 		return;
 
@@ -446,18 +514,25 @@ void TimeLine::Render(Shader shader, ARAPTool* arap) {
 		}
 	}
 
-	
+	textureShader.use();
+	textureShader.setUniformInt("texture1", 0);
+	// set the texture value for the texture shader
+	glActiveTexture(GL_TEXTURE0); // activate the texture unit first before binding texture
+	glBindTexture(GL_TEXTURE_2D, m_shape.texture);
+	textureShader.setUniform3fv("color", glm::vec3(1.0, 1.0, 1.0));
 
 	glm::mat4 modelMat = glm::mat4(1.0);
 	// set the model matrix value
-	shader.setUniformMatrix4fv("model", modelMat);
+	textureShader.setUniformMatrix4fv("model", modelMat);
 
 	glBindVertexArray(m_shape.vao);
-	shader.use();
-	shader.setUniform3fv("color", glm::vec3(1.0, 1.0, 1.0));
+	//shader.use();
+//	shader.setUniform3fv("color", glm::vec3(1.0, 1.0, 1.0));
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 
+	shader.use();
+	shader.setUniformMatrix4fv("model", modelMat);
 	if (framesIndex.size() > 0) {
 		glPointSize(8.0);
 		shader.setUniform3fv("color", glm::vec3(1.0, 0.0, 0.0));

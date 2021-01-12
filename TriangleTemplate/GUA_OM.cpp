@@ -481,9 +481,11 @@ void Tri_Mesh::Render_SolidWireframe(Shader normalShader, Shader textureShader, 
 	// shader
 	textureShader.use();
 	textureShader.setUniformInt("texture1", 0);
+
 	// set the texture value for the texture shader
 	glActiveTexture(GL_TEXTURE0); // activate the texture unit first before binding texture
 	glBindTexture(GL_TEXTURE_2D, texture);
+	textureShader.setUniform3fv("color", glm::vec3(1.0, 1.0, 1.0));
 
 	glBindVertexArray(face_vao);
 	glDrawElements(GL_TRIANGLES, n_faces() * 3, GL_UNSIGNED_INT, 0);

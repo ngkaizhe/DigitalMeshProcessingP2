@@ -25,8 +25,10 @@ class Button {
 		GLuint ebo;
 
 		GLuint p_normal;
-		int materialId;
-		int indexCount;
+		// texture
+		unsigned int texture;
+		unsigned int texture1;
+
 		glm::mat4 model;
 	} Shape;
 
@@ -44,9 +46,14 @@ public:
 	Shape m_shape;
 	btnType type;
 	glm::vec2 center;
+
 	float width;
 	float height;
+	bool keep = false;
+	bool clickf = false;
 	bool initf = false;
+	int total_cd = 8;
+	int cd = 8;
 };
 
 class AnimControlPoint {
@@ -84,7 +91,7 @@ public:
 	//void AnimationParser(string path);
 	AnimationData* SaveAnimation(int index);
 
-	void Render(Shader shader, ARAPTool* a);
+	void Render(Shader shader, Shader textureShader, ARAPTool* a);
 	void Play(bool f);
 	void SetSpeed(float sp);
 private:
@@ -106,7 +113,7 @@ public:
 	Animation(TimeLine* tl, Button* rec, Button* star, Button* stop, Button* save_btn, Button* clear_btn);
 
 	void InitFinish();
-	void Render(Shader shader, ARAPTool* a);
+	void Render(Shader normalShader, Shader textureShader, ARAPTool* a);
 	int Click(int state, int x, int y);
 	void SetKeyFrame(vector<CtrlPoint> cps, bool init = false);
 	void AnimationParser();

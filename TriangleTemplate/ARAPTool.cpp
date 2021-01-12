@@ -51,7 +51,9 @@ ARAPTool::ARAPTool(Tri_Mesh* mesh2D, int pictureHeight, int pictureWidth)
 	// load and generate the texture
 	int width, height, nrChannels;
 	stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
-	unsigned char* data = stbi_load("../Assets/pictures/gingerbread_man_texture.png", &width, &height, &nrChannels, 0);
+	//unsigned char* data = stbi_load("../Assets/pictures/gingerbread_man_texture.png", &width, &height, &nrChannels, 0);
+	unsigned char* data = stbi_load("../Assets/pictures/gingerbread_man_texture_3.png", &width, &height, &nrChannels, 0);
+	
 	if (data)
 	{
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
