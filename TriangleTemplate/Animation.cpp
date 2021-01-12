@@ -1,22 +1,39 @@
 #include "Animation.h"
 #include <iostream>
-using namespace std;
 #include <algorithm>    // std::find
+#include <fstream>
+#include <string> 
+#include <io.h>
+
+using namespace std;
 
 Animation::Animation() {
 
 }
 
-Animation::Animation(TimeLine* tl, Button* rec, Button* star, Button* stop) {
+Animation::Animation(TimeLine* tl, Button* rec, Button* star, Button* stop, Button* save, Button* clear) {
 	timeLine = tl;
 	record_btn = rec;
 	start_btn = star;
 	stop_btn = stop;
+	save_btn = save;
+	clear_btn = clear;
 
 	timeLine->InitVAOandVBO();
 	record_btn->InitVAOandVBO();
 	start_btn->InitVAOandVBO();
 	stop_btn->InitVAOandVBO();
+	save_btn->InitVAOandVBO();
+	clear_btn->InitVAOandVBO();
+}
+
+void Animation::InitFinish() {
+	timeLine->InitFinish();
+	record_btn->InitFinish();
+	start_btn->InitFinish();
+	stop_btn->InitFinish();
+	save_btn->InitFinish();
+	clear_btn->InitFinish();
 }
 
 void Animation::Render(Shader shader, ARAPTool* a) {
@@ -24,6 +41,8 @@ void Animation::Render(Shader shader, ARAPTool* a) {
 	record_btn->Render(shader);
 	start_btn->Render(shader);
 	stop_btn->Render(shader);
+	save_btn->Render(shader);
+	clear_btn->Render(shader);
 }
 
 int Animation::Click(int state, int x, int y) {
@@ -31,17 +50,23 @@ int Animation::Click(int state, int x, int y) {
 	bool record_flag = false;
 	bool start_flag = false;
 	bool stop_flag = false;
+	bool save_flag = false;
+	bool clear_flag = false;
 	bool timeLine_flag = false;
 
 	record_flag = record_btn->Click(x, y);
 	start_flag = start_btn->Click(x, y);
 	stop_flag = stop_btn->Click(x, y);
+	save_flag = save_btn->Click(x, y);
+	clear_flag = clear_btn->Click(x, y);
 
-	if(!record_flag && !start_flag && !stop_flag)
+
+	if(!record_flag && !start_flag && !stop_flag && !save_flag && !clear_flag)
 		timeLine_flag = timeLine->Click(x, y);
 
 	if (record_flag) {
 		animState = AnimState::RECORDING;
+
 		return 1;
 	}else if (start_flag) {
 		animState = AnimState::PLAYING;
@@ -52,6 +77,16 @@ int Animation::Click(int state, int x, int y) {
 		timeLine->Play(false);
 		return 3;
 	}
+	else if (save_flag) {
+		animationList.push_back(timeLine->SaveAnimation(animationList.size()));
+		cout << "Save Animation!\n";
+		return 2;
+	}
+	else if (clear_flag) {
+		cout << "Clear timeLine!\n";
+		timeLine->Clear();
+		return 3;
+	}
 	else if (timeLine_flag) {
 		return 4;
 	}
@@ -59,8 +94,78 @@ int Animation::Click(int state, int x, int y) {
 	//return record_flag | start_flag | stop_flag | timeLine_flag;
 }
 
-void Animation::SetKeyFrame(vector<CtrlPoint> cps) {
-	timeLine->SetKeyFrame(cps);
+void Animation::SetKeyFrame(vector<CtrlPoint> cps, bool init) {
+	timeLine->SetKeyFrame(cps, init);
+}
+
+void Animation::AnimationParser() {
+	cout << "AnimationParser!\n";
+	string path = "../Assets/AnimationList/";
+	for (int i = 0; i < 2; i++) {
+		ifstream fin(path + std::to_string(i) + ".txt");
+		string str;
+		int keyPointNum;
+		int key_controlpointNum;
+
+		fin >> str;	// 動畫有幾個keyframes
+		keyPointNum = stoi(str);
+		fin >> str; // 每個key有幾個control point
+		key_controlpointNum = stoi(str);
+
+		int state = 0;
+		map<float, AnimControlPoint*> frames;
+		vector<float> indexs;
+
+		for (int k = 0; k < keyPointNum; k++) {
+			fin >> str;	// time
+
+			vector<CtrlPoint> keyPoints;
+			int time = stoi(str);
+
+			indexs.push_back(time);
+			for (int m = 0; m < key_controlpointNum; m++) {
+				fin >> str;
+				int idx = stoi(str);
+
+				fin >> str;
+				int x = stoi(str);
+
+				fin >> str;
+				int y = stoi(str);
+
+				CtrlPoint cp;
+				cp.idx = idx;
+				cp.p = OMT::Point(x, y, 0);
+				keyPoints.push_back(cp);
+			}
+			AnimControlPoint* ap = new AnimControlPoint(keyPoints);
+			frames[time] = ap;
+		}
+		fin.close();
+
+		AnimationData* ad = new AnimationData(frames, indexs);
+		animationList.push_back(ad);
+	}
+	timeLine->SetAnimation(animationList[animIndex]->keyframes, animationList[animIndex]->framesIndex);
+}
+
+void Animation::OnAnimationListChange(int index) {
+	if (index > animationList.size()) {
+		cout << "Animation Index Out of range!\n";
+		return;
+	}
+	animIndex = index;
+	timeLine->SetAnimation(animationList[animIndex]->keyframes, animationList[animIndex]->framesIndex);
+}
+
+vector<glm::vec2> Animation::GetCpsPos() {
+	AnimationData* ad = animationList[animIndex];
+	vector<CtrlPoint> cps = ad->keyframes[ad->framesIndex[0]]->keyPoints;
+	vector<glm::vec2> pos;
+	for (int i = 0; i < cps.size(); i++) {
+		pos.push_back(glm::vec2(cps[i].p[0], cps[i].p[1]));
+	}
+	return pos;
 }
 
 Button::Button() {
@@ -110,23 +215,12 @@ void Button::InitVAOandVBO() {
 	glBindVertexArray(0);
 }
 
+void Button::InitFinish() {
+	initf = true;
+}
 
 bool Button::Collider(int x, int y) {
-	string btnN = "";
-	switch (type) {
-	case btnType::RECORD:
-		btnN = "record";
-		break;
-	case btnType::START:
-		btnN = "start";
-		break;
-	case btnType::STOP:
-		btnN = "stop";
-		break;
-	case btnType::TIMELINE:
-		btnN = "timeLine";
-		break;
-	}
+	
 	y = ScreenHeight - y;
 
 	if (x <= center.x + width && x >= center.x - width && y <= center.y + height && y >= center.y - height) {
@@ -136,7 +230,8 @@ bool Button::Collider(int x, int y) {
 }
 
 void Button::Render(Shader shader) {
-
+	if (!initf)
+		return;
 	//ReBind();
 	glm::mat4 modelMat = glm::mat4(1.0);
 	// set the model matrix value
@@ -153,6 +248,12 @@ void Button::Render(Shader shader) {
 		break;
 	case btnType::STOP:
 		shader.setUniform3fv("color", glm::vec3(1.0, 0.0, 1.0));
+		break;
+	case btnType::SAVE:
+		shader.setUniform3fv("color", glm::vec3(0.0, 0.0, 1.0));
+		break;
+	case btnType::CLEAR:
+		shader.setUniform3fv("color", glm::vec3(0.0, 0.0, 0.0));
 		break;
 	case btnType::TIMELINE:
 		shader.setUniform3fv("color", glm::vec3(0.9, 0.9, 0.9));
@@ -306,7 +407,6 @@ bool TimeLine::Click(int x, int y) {
 		cout << "Click " << "timeLine" << " button!\n";
 		key_time = x;
 		return true;
-		//linePos = x;
 	}
 	return false;
 }
@@ -318,6 +418,8 @@ void TimeLine::Play(bool f) {
 }
 
 void TimeLine::Render(Shader shader, ARAPTool* arap) {
+	if (!initf)
+		return;
 
 	if (isplay) {
 		key_time += speed;
@@ -325,10 +427,12 @@ void TimeLine::Render(Shader shader, ARAPTool* arap) {
 			key_time -= ScreenWidth;
 			key_index = 0;
 		}
+	}
 
+	if (framesIndex.size() > 0) {
 		CheckIndex();
 		AnimControlPoint* AP = keyframes[framesIndex[key_index]];
-
+	//	cout << "AP keyPoints size : " << AP->keyPoints.size() << "\n";
 		for (int i = 0; i < AP->keyPoints.size(); i++) {
 			int x = AP->keyPoints[i].p[0];
 			int y = AP->keyPoints[i].p[1];
@@ -340,8 +444,9 @@ void TimeLine::Render(Shader shader, ARAPTool* arap) {
 			}
 			arap->OnMotion(x, y, AP->keyPoints[i].idx);
 		}
-
 	}
+
+	
 
 	glm::mat4 modelMat = glm::mat4(1.0);
 	// set the model matrix value
@@ -353,11 +458,11 @@ void TimeLine::Render(Shader shader, ARAPTool* arap) {
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 
-	if (keyframes.size() > 0) {
+	if (framesIndex.size() > 0) {
 		glPointSize(8.0);
 		shader.setUniform3fv("color", glm::vec3(1.0, 0.0, 0.0));
 		glBindVertexArray(key_vao);
-		glDrawArrays(GL_POINTS, 0, keyframes.size());
+		glDrawArrays(GL_POINTS, 0, framesIndex.size());
 		glBindVertexArray(0);
 	}
 
@@ -369,7 +474,9 @@ void TimeLine::Render(Shader shader, ARAPTool* arap) {
 	glBindVertexArray(0);
 }
 
-void TimeLine::SetKeyFrame(vector<CtrlPoint> cps) {
+void TimeLine::SetKeyFrame(vector<CtrlPoint> cps, bool init = false) {
+	if (init)
+		key_time = 0;
 	AnimControlPoint* ap = new AnimControlPoint(cps);
 	keyframes[key_time] = ap;
 
@@ -382,7 +489,42 @@ void TimeLine::SetKeyFrame(vector<CtrlPoint> cps) {
 	BindKey();
 }
 
+void TimeLine::SetAnimation(map<float, AnimControlPoint*> frames, vector<float> indexs) {
+	keyframes = frames;
+	framesIndex = indexs;
+	BindKey();
+}
+
+void TimeLine::Clear() {
+
+	framesIndex.clear();
+}
+
+AnimationData* TimeLine::SaveAnimation(int index) {
+	string str = std::to_string(index);
+	ofstream fout("../Assets/AnimationList/" + str + ".txt");
+	fout << framesIndex.size() << " " << keyframes[framesIndex[0]]->keyPoints.size() << "\n";
+	for (int i = 0; i < framesIndex.size(); i++) {
+		fout << framesIndex[i] << "\n";
+		vector<CtrlPoint> keyPoints = keyframes[framesIndex[i]]->keyPoints;
+		for (int j = 0; j < keyPoints.size(); j++) {
+			fout << keyPoints[j].idx << " " << keyPoints[j].p[0] << " " << keyPoints[j].p[1] << "\n";
+		}
+	}
+	fout.close();
+	AnimationData* ad = new AnimationData(keyframes, framesIndex);
+	return ad;
+}
+
 void TimeLine::SetSpeed(float sp) {
 	speed = sp;
 }
 
+AnimationData::AnimationData() {
+
+}
+
+AnimationData::AnimationData(map<float, AnimControlPoint*> frames, vector<float> indexs) {
+	keyframes = frames;
+	framesIndex = indexs;
+}

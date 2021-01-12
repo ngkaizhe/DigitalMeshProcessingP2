@@ -859,6 +859,17 @@ void ARAPTool::OnMouse(int x, int y, CtrlOP op)
 	}
 }
 
+void ARAPTool::SetControlPoints(std::vector<glm::vec2> p) {
+	std::cout << "SetControlPoints ! \n";
+
+	for (int i = 0; i < p.size(); i++) {
+		OnMouse(p[i].x, p[i].y, CtrlOP::Add);
+	/*	std::cout << idxs[i] << "\n";
+		flags[idxs[i]] = 1;
+		ctrlPoints.push_back(idxs[i]);*/
+	}
+}
+
 void ARAPTool::ReBind() {
 	totalCtrlPoint = 0;
 

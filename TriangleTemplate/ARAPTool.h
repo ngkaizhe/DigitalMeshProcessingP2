@@ -30,6 +30,7 @@ public:
 	std::vector<CtrlPoint> GetCtrlPoint();
 	Tri_Mesh* GetMesh();
 
+	void SetControlPoints(std::vector<glm::vec2> p);
 	void ReBind();
 	void Render(Shader normalShader, Shader textureShader);
 	void OnMotion(int x, int y, int ctrl_index);
@@ -57,6 +58,7 @@ private:
 	void preCompG();
 	void preStep1();
 	void step1();
+
 
 	void getFeachTri(int* v_id, Eigen::MatrixXd& K, Eigen::Matrix4d& F);
 	void preCompF();

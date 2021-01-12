@@ -11,7 +11,7 @@ extern float imageScale;
 extern int ScreenWidth;
 extern int ScreenHeight;
 
-enum btnType{ RECORD, START, STOP, TIMELINE};
+enum btnType{ RECORD, START, STOP, SAVE, CLEAR, TIMELINE};
 enum AnimState {NONE, RECORDING, PLAYING};
 
 class Button {
@@ -36,6 +36,7 @@ public:
 	Button(glm::vec2 c, float w, float h, btnType t);
 
 	void InitVAOandVBO();
+	void InitFinish();
 	bool Collider(int x, int y);
 	virtual void Render(Shader shader);
 	virtual bool Click(int x, int y);
@@ -45,6 +46,7 @@ public:
 	glm::vec2 center;
 	float width;
 	float height;
+	bool initf = false;
 };
 
 class AnimControlPoint {
@@ -55,6 +57,14 @@ public:
 	vector<CtrlPoint> keyPoints;
 };
 
+class AnimationData {
+public:
+	AnimationData();
+	AnimationData(map<float, AnimControlPoint*> frames, vector<float> indexs);
+
+	map<float, AnimControlPoint*> keyframes;
+	vector<float> framesIndex;
+};
 
 class TimeLine :public Button {
 public:
@@ -68,7 +78,11 @@ public:
 	void CheckIndex();
 
 	bool Click(int x, int y);
-	void SetKeyFrame(vector<CtrlPoint> cps);
+	void SetKeyFrame(vector<CtrlPoint> cps, bool init);
+	void SetAnimation(map<float, AnimControlPoint*> frames, vector<float> indexs);
+	void Clear();
+	//void AnimationParser(string path);
+	AnimationData* SaveAnimation(int index);
 
 	void Render(Shader shader, ARAPTool* a);
 	void Play(bool f);
@@ -89,17 +103,25 @@ class Animation
 {
 public:
 	Animation();
-	Animation(TimeLine* tl, Button* rec, Button* star, Button* stop);
+	Animation(TimeLine* tl, Button* rec, Button* star, Button* stop, Button* save_btn, Button* clear_btn);
 
+	void InitFinish();
 	void Render(Shader shader, ARAPTool* a);
 	int Click(int state, int x, int y);
-	void SetKeyFrame(vector<CtrlPoint> cps);
+	void SetKeyFrame(vector<CtrlPoint> cps, bool init = false);
+	void AnimationParser();
+	void OnAnimationListChange(int index);
+	vector<glm::vec2> GetCpsPos();
 
 	TimeLine* timeLine;
 	Button* record_btn;
 	Button* start_btn;
 	Button* stop_btn;
+	Button* save_btn;
+	Button* clear_btn;
 
+	int animIndex = 0;
+	vector<AnimationData*> animationList;
 	AnimState animState = AnimState::NONE;
 	std::vector<CtrlPoint> lastCPs;
 };

@@ -47,6 +47,7 @@ Tri_Mesh* test_1 = NULL;
 Triangles m_triangles;
 std::vector<Vector2> vertices;
 int flag = -1;
+int animIndex = 0;
 int MouseX;
 int MouseY;
 
@@ -65,11 +66,26 @@ enum PictureSelectionMode
 };
 PictureSelectionMode pictureSelectionMode = Gingerman;
 
+enum AnimationSelectionMode
+{
+	Walk,
+	Jump,
+};
+AnimationSelectionMode animSelectionMode = Walk;
+
+
 TwEnumVal pictureSelectionModeEV[] = {
 	{Gingerman, "Ginger Man"},
 	{Gingerman2, "Ginger Man2"},
 };
+
+TwEnumVal animSelectionModeEV[] = {
+	{Walk, "Walk"},
+	{Jump, "Jump"},
+};
+
 TwType pictureSelectionModeType;
+TwType animSelectionModeType;
 
 void LoadImg(string path);
 void Triangulation();
@@ -99,11 +115,14 @@ void SetupGUI() {
 	TwDefine(" 'Project2' size='230 90' ");
 	TwDefine(" 'Project2' fontsize='3' color='96 216 224'");
 
-
 	 //Defining season enum type
 	 pictureSelectionModeType = TwDefineEnum("SelectionModeType", pictureSelectionModeEV, 2);
+	 animSelectionModeType = TwDefineEnum("AnimSelectionModeType", animSelectionModeEV, 2);
+
 	 //Adding season to bar
 	 TwAddVarRW(bar, "SelectionMode", pictureSelectionModeType, &pictureSelectionMode, NULL);
+	 TwAddVarRW(bar, "Animation List", animSelectionModeType, &animSelectionMode, NULL);
+
 }
 
 void My_Init()
@@ -127,10 +146,16 @@ void My_Init()
 	int btn_h = 10;
 	// init animation tool
 	TimeLine* timeline = new TimeLine(glm::vec2(300, hpos), 300, 100, 1.0);
-	Button* record_btn = new Button(glm::vec2(500, btn_hPos), btn_w, btn_h, btnType::RECORD);
-	Button* start_btn = new Button(glm::vec2(530, btn_hPos), btn_w, btn_h, btnType::START);
-	Button* stop_btn = new Button(glm::vec2(560, btn_hPos), btn_w, btn_h, btnType::STOP);
-	anim = new Animation(timeline, record_btn, start_btn, stop_btn);
+	Button* record_btn = new Button(glm::vec2(520, btn_hPos), btn_w, btn_h, btnType::RECORD);
+	Button* start_btn = new Button(glm::vec2(550, btn_hPos), btn_w, btn_h, btnType::START);
+	Button* stop_btn = new Button(glm::vec2(580, btn_hPos), btn_w, btn_h, btnType::STOP);
+	Button* save_btn = new Button(glm::vec2(20, btn_hPos), btn_w, btn_h, btnType::SAVE);
+	Button* clear_btn = new Button(glm::vec2(50, btn_hPos), btn_w, btn_h, btnType::CLEAR);
+
+	anim = new Animation(timeline, record_btn, start_btn, stop_btn, save_btn, clear_btn);
+	anim->AnimationParser();
+	Arap->SetControlPoints(anim->GetCpsPos());
+	anim->InitFinish();
 }
 
 void LoadImg(string path) {
@@ -234,7 +259,10 @@ void My_Display()
 {
 	glClearColor(0.5f, 0.5f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+	if (animIndex != animSelectionMode) {
+		animIndex = animSelectionMode;
+		anim->OnAnimationListChange(animIndex);
+	}
 
 	Arap->Render(normalShader, textureShader);
 
@@ -278,6 +306,7 @@ void My_Mouse(int button, int state, int x, int y)
 		if (f > 0) {
 			switch (f) {
 			case 1:		//click record btn
+				anim->SetKeyFrame(Arap->GetCtrlPoint(), true);
 				break;
 			case 2:		//click start btn
 				break;
@@ -358,7 +387,6 @@ void My_Mouse_Moving(int x, int y) {
 			Arap->OnMotion(pixelSpaceValue.x, pixelSpaceValue.y, flag);//0.008s
 			if (anim->animState == AnimState::RECORDING) {
 				anim->SetKeyFrame(Arap->GetCtrlPoint());
-				//anim->SetKeyFrame(pixelSpaceValue.x, pixelSpaceValue.y, flag);
 			}
 		}
 	}
